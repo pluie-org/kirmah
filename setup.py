@@ -1,6 +1,6 @@
 #  !/usr/bin/env python
 #  -*- coding: utf-8 -*-
-#  kirmah-cli.py
+#  setup.py
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
@@ -28,17 +28,26 @@
 #  along with Kirmah.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from psr.sys                   import Sys, Const
-from kirmah.cli                import Cli
+from psr.kirmah         import conf
+from distutils.core     import setup
+import glob
+import os
 
-def main():
-    try:
-        c = 0
-        Cli('.'+Sys.sep)
-    except Exception as e :
-        Sys.pwarn((('main : ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
-        c = 1
-    return c
+# I18N
+I18NFILES = []
 
-if __name__ == '__main__':
-    Sys.exit(main())
+for filepath in glob.glob('resources/locale/*/LC_MESSAGES/*.mo'):
+    lang = filepath[len('resources/locale/'):]
+    targetpath = os.path.dirname(os.path.join('share/locale',lang))
+    I18NFILES.append((targetpath, [filepath]))
+
+setup(name      = conf.PRG_NAME,
+      version   = conf.PRG_VERS,
+      packages  = [conf.PRG_PACKAGE],
+      scripts   = [conf.PRG_SCRIPT, conf.PRG_CLI_NAME],
+      data_files= [('/usr/share/pixmaps/'+conf.PRG_PACKAGE    , glob.glob('resources/pixmaps/'+conf.PRG_PACKAGE+'/*.png')),
+                   ('/usr/share/applications'                 , ['resources/'+conf.PRG_PACKAGE+'.desktop']),
+                   ('/usr/share/'+conf.PRG_PACKAGE            , glob.glob('resources/'+conf.PRG_PACKAGE+'/LICENSE')),
+                   ('/usr/share/'+conf.PRG_PACKAGE+'/glade'   , glob.glob('resources/'+conf.PRG_PACKAGE+'/glade/*.glade'))]
+                   + I18NFILES
+      )

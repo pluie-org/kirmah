@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Name=Kirmah
+Comment=Encryption with symmetric-key algorithm Kirmah
+Version=0.34
+Icon=kirmah
+Exec=kirmah
+Terminal=false
+Type=Application
+StartupNotify=false
+MimeType=
+Categories=System;

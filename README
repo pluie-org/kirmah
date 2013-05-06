@@ -1,0 +1,27 @@
+Kirmah 2.17 (2013-05-06)
+=========================
+    
+Install on Archlinux
+-------------------------
+sudo pacman -U http://sourceforge.net/projects/kirmah/files/packages/archlinux/kirmah-2.17-1-any.pkg.tar.xz/download
+
+
+(re)build instruction
+-------------------------
+mkdir /tmp/kirmah; cd /tmp/kirmah;
+wget http://sourceforge.net/projects/kirmah/files/packages/archlinux/PKGBUILD/download
+mv download PKGBUILD
+wget http://sourceforge.net/projects/kirmah/files/packages/archlinux/kirmah.install/download
+mv download kirmah.install
+makepkg -s;
+
+
+Install on other distrib
+-------------------------
+install pkg depends (look at archlinux PKGBUILD file wich provide usefull informations)
+
+simply untar archive, then launch :
+$ python ./kirmah/kirmah.py 
+$ python ./kirmah/kirmah-cli.py
+
+you can also use python2 disutils and setup.py

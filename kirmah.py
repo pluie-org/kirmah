@@ -1,6 +1,6 @@
-#  !/usr/bin/env python
+#  !/usr/bin/env python3
 #  -*- coding: utf-8 -*-
-#  kirmah-cli.py
+#  kirmah.py
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
@@ -28,14 +28,14 @@
 #  along with Kirmah.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from psr.sys                   import Sys, Const
-from kirmah.cli                import Cli
+from psr.sys                import Sys, Const
+from kirmah.gui             import AppGui
 
 def main():
     try:
         c = 0
-        Cli('.'+Sys.sep)
-    except Exception as e :
+        AppGui()
+    except Exception as e:
         Sys.pwarn((('main : ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
         c = 1
     return c

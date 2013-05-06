@@ -1,153 +1,155 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-#                                                                               #
-#   software  : Kirmah <http://kirmah.sourceforge.net/>                         #
-#   version   : 2.1                                                             #
-#   date      : 2013                                                            #
-#   licence   : GPLv3.0   <http://www.gnu.org/licenses/>                        #
-#   author    : a-Sansara <http://www.a-sansara.net/>                           #
-#   copyright : pluie.org <http://www.pluie.org/>                               #
-#                                                                               #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#  !/usr/bin/env python
+#  -*- coding: utf-8 -*-
+#  psr/mproc.py
+#  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
-#   This file is part of Kirmah.
+#  software  : Kirmah    <http://kirmah.sourceforge.net/>
+#  version   : 2.17
+#  date      : 2013
+#  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
+#  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
+#  copyright : pluie.org <http://www.pluie.org/>
 #
-#   Kirmah is free software (free as in speech) : you can redistribute it 
-#   and/or modify it under the terms of the GNU General Public License as 
-#   published by the Free Software Foundation, either version 3 of the License, 
-#   or (at your option) any later version.
+#  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
-#   Kirmah is distributed in the hope that it will be useful, but WITHOUT 
-#   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
-#   FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for 
-#   more details.
+#  This file is part of Kirmah.
 #
-#   You should have received a copy of the GNU General Public License
-#   along with Kirmah.  If not, see <http://www.gnu.org/licenses/>.
-
+#  Kirmah is free software (free as in speech) : you can redistribute it
+#  and/or modify it under the terms of the GNU General Public License as
+#  published by the Free Software Foundation, either version 3 of the License,
+#  or (at your option) any later version.
+#
+#  Kirmah is distributed in the hope that it will be useful, but WITHOUT
+#  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+#  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+#  more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with Kirmah.  If not, see <http://www.gnu.org/licenses/>.
+#
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ module mproc ~~
 
-from gi.repository.GObject   import timeout_add
-from multiprocessing         import Process, Lock, Queue
-
-from psr.decorate            import log
-from psr.sys                 import Sys
+from multiprocessing                import Process, current_process, Pipe, Lock
+from multiprocessing.connection     import wait
+from threading                      import current_thread
+from psr.sys                        import Sys, Const, init
+from psr.log                        import Log
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~ class Ctrl ~~
+# ~~ class Worker ~~
 
-class Ctrl:
-    """"""
-    @log
-    def __init__(self, nproc, npqueue_bind=None, task=None, *args, **kwargs ):
+class Worker:
+
+    @Log(Const.LOG_BUILD)
+    def __init__(self, appname, debug, gui, color, loglvl, ppid, lock, id, wp, delay, task, *args, **kwargs):
+
+        def mptask(id, *args, **kwargs):
+            Sys.sendMainProcMsg(Manager.MSG_INIT, None)
+            otask = task(id=id, lock=lock, *args, **kwargs)
+            Sys.sendMainProcMsg(Manager.MSG_END, None)
+            return otask
+
+        init(appname, debug, ppid, color, loglvl)
+        Sys.g.WPIPE = wp
+        Sys.g.CPID  = id
+        Sys.g.GUI   = gui
+        Sys.g.RLOCK = lock
+        if delay : Sys.sleep(delay)
+        mptask(id, *args, **kwargs)
+        # don't directly close pipe 'cause of eventual loging
+        # pipe will auto close on terminating child process
+
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~ class Manager ~~
+
+class Manager:
+
+    MSG_INIT     = 0
+    MSG_PRINT    = 1
+    MSG_DATA     = 2
+    MSG_END      = 3
+    TYPE_MSG     = list(range(4))
+    K_ID         = 0
+    K_TYPE       = 1
+    K_DATA       = 2
+    K_PROC       = 0
+    K_PIPE       = 1
+
+    checktime    = None
+
+    @Log(Const.LOG_UI)
+    def __init__(self, task, nproc=2, delay=None, lock=None, *args, **kwargs):
         """"""
-        self.plist    = []
-        self.queue    = Queue()
-        self.npqueue  = Queue()
-        self.nproc    = nproc
-        self.done     = False
-        self.npq_bind = npqueue_bind
-        if task is not None :
-            self.bind_task(task, *args, **kwargs)
+        self.readers = []
+        self.plist   = []
+        self.onstart_bind = None
+        self.onrun_bind   = None
+        self.onend_bind   = None
+        for id in range(nproc):
+            r, w = Pipe(duplex=False)
+            self.readers.append(r)
+            # (process, wpipe)
+            p = Process(target=Worker, args=tuple([Sys.g.PRJ_NAME, Sys.g.DEBUG, Sys.g.GUI, Sys.g.COLOR_MODE, Sys.g.LOG_LEVEL, Sys.getpid(), lock, id, w, delay, task])+tuple(args), kwargs=kwargs)
+            self.plist.append((p, w))
 
-    def bind_task(self, task, *args, **kwargs):
+    @Log(Const.LOG_APP)
+    def run(self, checktime=None, onstart_bind=None, onrun_bind=None, onend_bind=None):
+        self.checktime    = checktime
+        self.onstart_bind = onstart_bind
+        self.onrun_bind   = onrun_bind
+        self.onend_bind   = onend_bind
+        for p, w in self.plist:
+            p.start()
+            w.close()
+        self.wait()
+
+
+    @Log(Const.LOG_DEBUG)
+    def wait(self):
         """"""
-        if len(self.plist) > 0 :
-            del self.plist
-            self.plist = []
-            del self.queue
-            self.queue   = Queue()
-            del self.npqueue
-            self.npqueue = Queue()
-        def mptask(npqueue, mproc_pid, mproc_queue, *args, **kwargs):
-            def wrapped(*args, **kwargs):
-                """Only queue need result"""
-                def orgtask(*args, **kwargs):
-                    Sys.g.MAIN_PROC  = None
-                    Sys.g.NPQUEUE    = npqueue
-                    return task(*args, **kwargs)
-                mproc_queue.put_nowait([mproc_pid, orgtask(*args, **kwargs)])
-            return wrapped(*args, **kwargs)
+        while self.readers:
+            self.wait_childs()
+            if self.checktime is not None : Sys.sleep(self.checktime)
 
-        for i in range(self.nproc):
-            self.plist.append(Process(target=mptask, args=tuple([self.npqueue,i,self.queue,i])+tuple(args), kwargs=kwargs))
-    
-    @log
-    def start(self, timeout=100, delay=None, maincb=None, childcb=None):
+
+    def getcpid(self, id):
         """"""
-        if childcb is not None : self.on_child_end = childcb
-        if maincb is not None  : self.on_end = maincb
-        if delay is None :
-            self.launch(timeout)
-        else :
-            timeout_add(delay, self.launch, timeout)
+        return self.plist[id][self.K_PROC].pid
 
-    #~ @log        
-    def launch(self, timeout):
+
+    @Log(Const.LOG_ALL)
+    def wait_childs(self):
         """"""
-        for p in self.plist:p.start()
-        self.list_process()
-        self.tid = timeout_add(timeout, self.check)
-        return False
-        
-    #~ @log        
-    def list_process(self):
-        """"""
-        if Sys.g.DEBUG : 
-            Sys.pcontent('current pid :'+str(Sys.getpid()))
-            Sys.pcontent('childs pid :')
-            for p in self.plist:
-                Sys.pcontent(str(p.pid))
-    
-    #~ @log
-    def end_process(self):
-        """"""        
-        if not self.queue.empty():
-            d = self.queue.get_nowait()
-            if d is not None :
-                self.on_child_end(d[0], d[1])
-                p = self.plist[d[0]]
-                if p.is_alive(): p.join()
+        for r in wait(self.readers):
+            try:
+                msg = r.recv()
+            except EOFError:
+                self.readers.remove(r)
+            else:
+                if len(msg)==3 and msg[self.K_TYPE] in self.TYPE_MSG :
 
-    #~ @log
-    def on_child_end(self, pid, data):
-        """"""
+                    cpid = self.getcpid(msg[self.K_ID])
 
-    #~ @log
-    def end_task(self):
-        """"""
-        self.queue.close()
-        self.queue.join_thread()
-        self.done = True
-        self.on_end()
+                    if msg[self.K_TYPE] == self.MSG_INIT :
+                        if hasattr(self.onstart_bind, '__call__'):
+                            self.onstart_bind(msg[self.K_ID], cpid, msg[self.K_DATA])
 
-    #~ @log
-    def on_end(self):
-        """"""
-        print(self)
-        print('all child process terminated')
+                    elif msg[self.K_TYPE] == self.MSG_PRINT :
+                        if Sys.g.DEBUG :
+                            if not Sys.g.GUI :
+                                for item in msg[self.K_DATA] :
+                                    Sys.print(item[0], Sys.clzdic[item[1]], False, True)
+                                Sys.dprint('')
+                            #~ else :
+                            Sys.wlog(msg[self.K_DATA])
 
-    #~ @log
-    def check(self):
-        """"""
-        leave = True
-        # child process log queue
-        if self.npq_bind is not None :
-            while not self.npqueue.empty():
-                d = self.npqueue.get_nowait()
-                if d is not None: self.npq_bind(d)
-        # ctrl queue
-        if not self.queue.empty():
-            self.end_process()
-            for p in self.plist: leave = leave and not p.is_alive()
-            if leave :
-                while not self.queue.empty():
-                    self.end_process()
-                self.end_task()                
-        else : leave = False
-        return not leave
+                    elif msg[self.K_TYPE] == self.MSG_DATA :
+                        if hasattr(self.onrun_bind, '__call__'):
+                            self.onrun_bind(msg[self.K_ID], cpid, msg[self.K_DATA])
 
-
+                    elif msg[self.K_TYPE] == self.MSG_END :
+                        if hasattr(self.onend_bind, '__call__'):
+                            self.onend_bind(msg[self.K_ID], cpid, msg[self.K_DATA])
