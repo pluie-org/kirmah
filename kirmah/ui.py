@@ -37,6 +37,7 @@ from gi.repository.Gtk         import AboutDialog, Builder, main as main_enter, 
 from gi.repository.GdkPixbuf   import Pixbuf
 from gi.repository.GObject     import threads_init, GObject, idle_add, SIGNAL_RUN_LAST, TYPE_NONE, TYPE_STRING, TYPE_FLOAT, TYPE_BOOLEAN
 from threading                 import Thread, current_thread, enumerate as thread_enum
+from multiprocessing           import Event
 from psr.sys                   import Sys, Io, Const
 from psr.log                   import Log
 from kirmah                    import conf
@@ -317,17 +318,18 @@ class CliThread(Thread, IdleObject):
 
 
     @Log(Const.LOG_DEBUG)
-    def __init__(self, rwargs):
+    def __init__(self, rwargs, event):
         Thread.__init__(self)
         IdleObject.__init__(self)
         self.setName('CliThread')
         self.cliargs = rwargs
-
+        self.event   = event
 
     @Log(Const.LOG_DEBUG)
     def run(self):
         """"""
         self.cancelled = False
+        Sys.g.MPEVENT.clear()
         print(Sys.g.LOG_LEVEL)
         Cli('./', Sys.getpid(), self.cliargs, self, Sys.g.LOG_LEVEL)
         self.emit("completed")
@@ -346,6 +348,7 @@ class CliThread(Thread, IdleObject):
         cancellation logic
         """
         self.cancelled = True
+        self.event.set()
 
 
     @Log(Const.LOG_NEVER)

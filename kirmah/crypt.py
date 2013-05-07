@@ -91,60 +91,6 @@ def represents_int(s):
         return False
 
 
-@Log(Const.LOG_DEBUG)
-def getRandomListFromKey(key, size):
-    """"""
-    j, ok, lk, r, ho, hr, lv, hv, rev = 0, False, len(key), None, [], [], 0, size-1, False
-    for i in range(size) :
-        if j >= lk : j = 0
-        r  = key[j]
-        ok = r < size and not r in ho
-        if not ok:
-            r = hv if not rev else lv
-            while r in ho :
-                r = r - 1 if not rev else r + 1
-                if r > size-1 : r = 0
-                elif r < 0 : r = size - 1
-            if not rev : hv = r
-            else : lv = r
-            ok = not r in ho
-        if ok : ho.append(r)
-        j += 1
-        rev = not rev
-    return getSimulRandomList(ho, getSimulNumber(key, size//5 if not size//5==0 else size*2, size//10 if not size//10 ==0 else size))
-
-
-@Log(Const.LOG_ALL)
-def getSimulRandomList(lst, chsize):
-    """"""
-    return _getSimulRandomList(list(reversed(_getSimulRandomList(_getSimulRandomList(lst, chsize), 4))),4)
-
-
-@Log(Const.LOG_PRIVATE)
-def _getSimulRandomList(lst, chsize):
-    """"""
-    size, rlst, pos = len(lst), [], 0
-    if chsize > 0 :
-        for i in range(chsize+1):
-            for j in range(ceil(size/chsize)+1):
-                pos = j*chsize+i
-                if pos in lst and not lst[pos] in rlst:
-                    rlst.append(lst[pos])
-    else : rlst = lst
-    return rlst
-
-
-@Log(Const.LOG_DEBUG)
-def getSimulNumber(key, lim, delta=12):
-    """"""
-    s = 0
-    for c in key[::-1] :
-        if represents_int(chr(c)): c = int(chr(c))
-        if c > 2 and (lim-delta > c + s or c + s < lim + delta ) :
-            s += c
-    return s
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ class KeyGen ~~
 
@@ -231,8 +177,8 @@ class ConfigKey:
         self.rdmz.new(count)
         dic, lst, hroot = {}, [], hash_sha256(self.salt+name)
 
-        #~ srdl = Kirmah.getRandomListFromKey(self.key, count)
-        srdl = getRandomListFromKey(self.key, count)
+        srdl = Kirmah.getRandomListFromKey(self.key, count)
+        #~ srdl = getRandomListFromKey(self.key, count)
         for i in range(count) :
             self.noiser.build(i,ConfigKey.sumNumber(hash_sha256(str(i)+self.salt+name),1 if i%2 else 2))
             d     = str(i).rjust(2,'0')
@@ -419,27 +365,37 @@ class Kirmah:
     @Log()
     def compress_start(self, fromPath, toPath, compress=True, lvl=9):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c :
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     data = fi.read() if not compress else Io.gzcompress(fi.read(), lvl)
                     fo.write(b2a_base64(data))
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Compression', d, c)
 
 
     @Log()
     def uncompress_start(self, fromPath, toPath, decompress=True):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c :
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     data = a2b_base64(fi.read())
                     fo.write(data if not decompress else Io.gzdecompress(data))
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Compression mode', d, c)
 
 
     @Log()
     def compress_end(self, fromPath, toPath, compress=True, lvl=9):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     data   = fi.read()
@@ -447,17 +403,22 @@ class Kirmah:
                     header = self.kh.buildHeader(len(data))
                     fo.write(header)
                     fo.write(data)
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Compression mode', d, c)
 
 
     @Log()
     def uncompress_end(self, fromPath, toPath, decompress=True):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     fi.seek(self.kh.POS_END)
                     fo.write(fi.read() if not decompress else Io.gzdecompress(fi.read()))
-
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Compression mode', d, c)
 
     @Log(Const.LOG_ALL)
     def encryptStr(self, data):
@@ -474,7 +435,7 @@ class Kirmah:
 
 
     @Log()
-    def encryptToFile(self, fromPath, toPath, i=0, lock=None):
+    def encryptToFile(self, fromPath, toPath, i=0, event=None):
         """"""
         if not Sys.is_cli_cancel():
             with Io.ufile(fromPath) as fi :
@@ -483,14 +444,15 @@ class Kirmah:
                     for c in Io.read_utf8_chr(fi):
                         if i >= lk:
                             i = 0
-                            if Sys.is_cli_cancel(lock):
+                            if Sys.is_cli_cancel(event) :
+                                Sys.pwarn((('terminating child process ',(str(Sys.getpid()),Sys.CLZ_WARN_PARAM), ' !'),), False)
                                 break
                         fo.write(chr(ord(c) + i//4 + (self.key[i] if ord(c) + self.key[i] + i//4 < 11000 else -self.key[i])))
                         i += 1
 
 
     @Log()
-    def decryptToFile(self, fromPath, toPath, i=0):
+    def decryptToFile(self, fromPath, toPath, i=0, event=None):
         """"""
         if not Sys.is_cli_cancel():
             with Io.ufile(fromPath) as fi :
@@ -502,7 +464,9 @@ class Kirmah:
                     for c in Io.read_utf8_chr(fi):
                         if i >= lk:
                             i = 0
-                            if Sys.is_cli_cancel(): break
+                            if Sys.is_cli_cancel(event) :
+                                Sys.pwarn((('terminating child process ',(str(Sys.getpid()),Sys.CLZ_WARN_PARAM), ' !'),), False)
+                                break
                         try :
                             fo.write(chr(ord(c)- i//4 + (-self.key[i] if ord(c) + self.key[i] +i//4 < 110000 else self.key[i])))
                         except Exception as e :
@@ -516,7 +480,9 @@ class Kirmah:
     @Log()
     def randomFileContent(self, fromPath, toPath):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     fsize, chsize, size = Kirmah.getSizes(fromPath)
@@ -525,6 +491,8 @@ class Kirmah:
                     for piece, i in Io.read_in_chunks(fi, chsize):
                         fo.seek(lst[i]*chsize-(rest if lst[i] > lst[size-1] else 0))
                         fo.write(piece[::-1])
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Random mode', d, c)
 
 
     @Log()
@@ -562,7 +530,9 @@ class Kirmah:
     @Log()
     def mpMergeFiles(self,hlstPaths, toPath, noRemove=False):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             with Io.wfile(toPath) as fo:
                 for fromPath in hlstPaths :
                     with Io.rfile(fromPath) as fi :
@@ -573,25 +543,31 @@ class Kirmah:
     @Log()
     def unRandomFileContent(self, fromPath, toPath):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             with Io.rfile(fromPath) as fi :
                 with Io.wfile(toPath) as fo :
                     fsize, chsize, size    = Kirmah.getSizes(fromPath)
                     lst, rest, piece, data = Kirmah.getRandomListFromKey(self.ck.key, size), chsize - fsize%chsize, b'', []
                     if rest == chsize : rest = 0
                     for i, pos in enumerate(lst):
-                        d = pos*chsize-(rest if pos >= lst[size-1] and pos!=0 else 0)
-                        if d >= 0 : fi.seek(d)
+                        dp = pos*chsize-(rest if pos >= lst[size-1] and pos!=0 else 0)
+                        if dp >= 0 : fi.seek(dp)
                         piece = fi.read(chsize)
                         if i == size-1 and rest > 0 :
                             piece = piece[:-rest] if lst[i]==0 else piece[rest:]
                         fo.write(piece[::-1])
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Random mode', d, c)
 
 
     @Log()
     def mixdata(self, fromPath, toPath, encryptNoise=False, label='kirmah', cpart=22):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:        
             hlst         = self.ck.getHashList(label, cpart, False)
             hlst['data'] = sorted(hlst['data'], key=lambda hlst: hlst[0])
             size         = Sys.getsize(fromPath)
@@ -607,9 +583,10 @@ class Kirmah:
                         if encryptNoise :
                             bdata, adata = self.encryptStr(bdata)[:row[2]], self.encryptStr(adata)[:row[3]]
                         fi.seek(psize*row[5])
-                        d = fi.read(psize)
-                        fo.write(bdata[:row[2]] + d + adata[:row[3]])
+                        fo.write(bdata[:row[2]] + fi.read(psize) + adata[:row[3]])
                         cp      += 1
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Mix mode', d, c)
 
 
     @Log(Const.LOG_DEBUG)
@@ -634,7 +611,9 @@ class Kirmah:
     @Log()    
     def unmixdata(self, fromPath, toPath, label='kirmah', cpart=22):
         """"""
-        if not Sys.is_cli_cancel():
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             rsz, cp, hlst = 0, 0, self.ck.getHashList(label, cpart, True)
             for row in hlst['data']:
                 rsz += row[2]+row[3]
@@ -652,12 +631,14 @@ class Kirmah:
                     fi.seek(0,Io.SEEK_CUR)
                     for row in hlst['data']:
                         fi.seek(lbi[row[0]]+row[2])
-                        d = fi.read(psize if row[5] <= mxp else (rest if rest!=psize or (psize*cpart==size) else 0))
+                        dp = fi.read(psize if row[5] <= mxp else (rest if rest!=psize or (psize*cpart==size) else 0))
                         cp += 1
-                        if fo.tell() + len(d) > size :
-                            fo.write(d[:rest])
+                        if fo.tell() + len(dp) > size :
+                            fo.write(dp[:rest])
                             break
-                        fo.write(d)
+                        fo.write(dp)
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Mix mode', d, c)
 
 
     # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -822,7 +803,8 @@ class Kirmah:
                 self.tmpPath2  = self.DIR_TEMP + Sys.basename(fromPath) + '.tmp2'
                 compend, compstart = not decHeader['cmode']== KirmahHeader.COMP_NONE, decHeader['cmode']== KirmahHeader.COMP_ALL
                 fp, tp             = fromPath, self.tmpPath1
-
+                Sys.wlog(Sys.dprint())
+                Sys.ptask('Compressing data')
                 self.compress_start(fp, tp, compstart)
                 fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
                 return fp, tp, decHeader['rmode'], decHeader['mmode'], compend
@@ -834,16 +816,23 @@ class Kirmah:
         if not Sys.is_cli_cancel():
             if rmode :
                 #~ self.mpRandomFileContent(fp, tp, 4)
+                Sys.wlog(Sys.dprint())
+                Sys.ptask('Randomizing data')
                 self.randomFileContent(fp, tp)
                 fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
 
             if mmode :
+                Sys.wlog(Sys.dprint())
+                Sys.ptask('Mixing data')
                 self.mixdata(fp, tp, True)
                 fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
-
+            Sys.wlog(Sys.dprint())
+            Sys.ptask('Compressing data')
             self.compress_end(fp, toPath, compend)
 
             # clean tmp files
+            Sys.wlog(Sys.dprint())
+            Sys.ptask('Cleaning')
             try :
                 Sys.removeFile(self.tmpPath1)
                 Sys.removeFile(self.tmpPath2)
@@ -870,30 +859,35 @@ class Kirmah:
 
 
     @Log()
-    def mproc_encode_part(self, id, lock=None):
+    def mproc_encode_part(self, id, event=None):
         """"""
         if not Sys.is_cli_cancel():
             mpfile, mpfilenc = self.KMP_FILE+'_'+str(Sys.g.MAIN_PROC)+'_'+str(id), self.KMP_FILE+'enc_'+str(Sys.g.MAIN_PROC)+'_'+str(id)
-            self.encryptToFile(mpfile, mpfilenc, self.getSubStartIndice(id), lock)
+            self.encryptToFile(mpfile, mpfilenc, self.getSubStartIndice(id), event)
             Sys.removeFile(mpfile)
 
 
     @Log()
     def encrypt_mproc(self, fp, tp, nproc=1):
         """"""
-        if not Sys.is_cli_cancel():
+        Sys.wlog(Sys.dprint())
+        Sys.ptask('Encrypting data')
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             if nproc == 1 :
                 self.encryptToFile(fp, tp)
             else :
                 hlstPaths = self.prepare_mproc_encode(fp, nproc)
-                mg        = Manager(self.mproc_encode_part, nproc, None, Sys.g.MPRLOCK)
+                mg        = Manager(self.mproc_encode_part, nproc, None, Sys.g.MPEVENT)
                 mg.run()
                 self.mpMergeFiles(hlstPaths, tp)
-
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Encrypt data', d, c)
 
     @Log()
     def encrypt(self, fromPath, toPath, nproc=1, header=None):
-        """"""
+        """"""        
         if not Sys.is_cli_cancel():
             fp, tp, rmode, mmode, compend = self.encrypt_sp_start(fromPath, toPath, header)
 
@@ -926,13 +920,19 @@ class Kirmah:
                     compend, compstart = not decHeader['cmode']== KirmahHeader.COMP_NONE, decHeader['cmode']== KirmahHeader.COMP_ALL
                     fp, tp             = fromPath, self.tmpPath1
 
+                    Sys.wlog(Sys.dprint())
+                    Sys.ptask('Uncompressing data')
                     self.uncompress_end(fp, tp, compend)
                     fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
 
                     if decHeader['mmode'] :
+                        Sys.wlog(Sys.dprint())
+                        Sys.ptask('Sorting data')
                         self.unmixdata(fp, tp)
                         fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
                     if decHeader['rmode'] :
+                        Sys.wlog(Sys.dprint())
+                        Sys.ptask('Reordering data')
                         self.unRandomFileContent(fp, tp)
                         fp, tp = tp, self.tmpPath2 if tp == self.tmpPath1 else self.tmpPath1
                     return fp, tp, compstart
@@ -942,7 +942,11 @@ class Kirmah:
     def decrypt_sp_end(self, fromPath, toPath, compstart):
         """"""
         if not Sys.is_cli_cancel():
+            Sys.wlog(Sys.dprint())
+            Sys.ptask('Uncompressing data')
             self.uncompress_start(fromPath, toPath, compstart)
+            Sys.wlog(Sys.dprint())
+            Sys.ptask('Cleaning')
             try :
                 Sys.removeFile(self.tmpPath1)
                 Sys.removeFile(self.tmpPath2)
@@ -953,14 +957,20 @@ class Kirmah:
     @Log()
     def decrypt_mproc(self, fromPath, toPath, nproc=1):
         """"""
-        if not Sys.is_cli_cancel():
+        Sys.wlog(Sys.dprint())
+        Sys.ptask('Decrypting data')        
+        d = Sys.datetime.now()
+        c = not Sys.is_cli_cancel()
+        if c:
             if nproc == 1 :
                 self.decryptToFile(fromPath, toPath)
             else :
                 hlstPaths = self.prepare_mproc_decode(fromPath, nproc)
-                mg        = Manager(self.mproc_decode_part, nproc, None, Sys.g.MPRLOCK)
+                mg        = Manager(self.mproc_decode_part, nproc, None, Sys.g.MPEVENT)
                 mg.run()
                 self.mpMergeFiles(hlstPaths, toPath)
+        Sys.wlog(Sys.dprint())
+        Sys.pstep('Decrypt data', d, c)
 
 
     @Log()
@@ -985,11 +995,11 @@ class Kirmah:
 
 
     @Log()
-    def mproc_decode_part(self, id):
+    def mproc_decode_part(self, id, event=None):
         """"""
         if not Sys.is_cli_cancel():
             mpfile, mpfiledec = self.KMP_FILE+'_'+str(Sys.g.MAIN_PROC)+'_'+str(id), self.KMP_FILE+'dec_'+str(Sys.g.MAIN_PROC)+'_'+str(id)
-            self.decryptToFile(mpfile, mpfiledec, self.getSubStartIndice(id))
+            self.decryptToFile(mpfile, mpfiledec, self.getSubStartIndice(id), event)
             Sys.removeFile(mpfile)
 
 

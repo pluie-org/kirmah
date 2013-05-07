@@ -34,7 +34,7 @@
 from psr.io             import Io
 from psr.const          import Const
 from threading          import RLock
-from multiprocessing    import RLock as MPRLock
+from multiprocessing    import Event
 from queue              import Queue
 
 def init(name, debug, remote=False, color=True, loglvl=Const.LOG_DEFAULT):
@@ -64,8 +64,9 @@ class Sys:
     g.LOG_TIME                 = False
     g.LOG_LIM_ARG_LENGTH       = Const.LOG_LIM_ARG_LENGTH
     g.QUIET                    = False
-    g.RLOCK                    = None    
-    g.MPRLOCK                  = None    
+    g.COLOR_MODE               = True
+    g.RLOCK                    = None
+    g.MPRLOCK                  = None
     g.WPIPE                    = None
     g.THREAD_CLI               = None
     g.UI_AUTO_SCROLL           = True
@@ -75,7 +76,7 @@ class Sys:
     g.SIGNAL_RUN               = 2
     g.GUI                      = False
     g.GUI_PRINT_STDOUT         = True
-    g.MPRLOCK                  = MPRLock()
+    g.MPEVENT                  = Event()
 
 
     @staticmethod
@@ -129,19 +130,11 @@ class Sys:
 
 
     @staticmethod
-    def is_cli_cancel(mprlock=None):
+    def is_cli_cancel(event=None):
         """"""
-        if mprlock is None :
-            return Sys.g.THREAD_CLI is not None and Sys.g.THREAD_CLI.cancelled
-        else :
-            with mprlock :
-                try:
-                    print(Sys.g.THREAD_CLI)
-                    print(Sys.g.THREAD_CLI.cancelled)
-                except:
-                    pass
-                return Sys.g.THREAD_CLI is not None and Sys.g.THREAD_CLI.cancelled
-            
+        c = Sys.g.THREAD_CLI is not None and Sys.g.THREAD_CLI.cancelled
+        return c or (event is not None and event.is_set())
+
 
     @staticmethod
     def isUnix():
@@ -228,7 +221,7 @@ class Sys:
 
     @staticmethod
     # never log this func -> maximum recursion
-    def wlog(data):
+    def wlog(data=[('','default')]):
         """"""
         if not Sys.is_cli_cancel():
             if Sys.g.LOG_QUEUE is not None :
@@ -237,7 +230,7 @@ class Sys:
                     Sys.cli_emit_progress()
                 except Exception as e:
                     Sys.pwarn((('wlog exception ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
-                    
+
         else :
             Sys.g.THREAD_CLI.stop()
 
@@ -269,8 +262,12 @@ class Sys:
         """"""
         if not dbcall :
             if not Sys.g.GUI or Sys.g.GUI_PRINT_STDOUT :
-                with Sys.g.RLOCK :
-                    if not Sys.g.QUIET : print(d,end=end)
+                if Sys.g.RLOCK is not None :
+                    with Sys.g.RLOCK :
+                        if not Sys.g.QUIET : print(d,end=end)
+                else :
+                    if not Sys.g.QUIET :
+                        print(d,end=end)
 
         bdata = [(d,Const.CLZ_DEFAULT)]
         return bdata
@@ -435,7 +432,7 @@ class Sys:
         Sys.wlog(bdata)
         if not noelf :
             Sys.wlog(Sys.dprint())
-            
+
         if exitOnFailed and not done:
            Sys.exit(1)
 

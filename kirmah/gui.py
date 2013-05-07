@@ -39,7 +39,6 @@ from time             import time, sleep
 from getpass          import getuser as getUserLogin
 from mmap             import mmap
 from math             import ceil
-from threading        import Thread, Event, Timer, Condition, RLock, current_thread, get_ident, enumerate as thread_enum
 
 from kirmah.crypt     import KeyGen, Kirmah, KirmahHeader, ConfigKey, BadKeyException, b2a_base64, a2b_base64, hash_sha256_file
 from kirmah.app       import KirmahApp, FileNotFoundException, FileNeedOverwriteException
@@ -47,7 +46,7 @@ from kirmah.ui        import Gui, CliThread
 from kirmah           import conf
 from psr.sys          import Sys, Io, Const
 from psr.log          import Log
-from psr.mproc        import Manager, Lock
+from psr.mproc        import Manager
 import pdb
 
 
@@ -115,8 +114,9 @@ class AppGui(Gui):
         tree_iter = cbt.get_model().get_iter_from_string('3')
         cbt.set_active_iter(tree_iter)
         cbt = self.get('comboboxtext2')
-        cbt.connect("changed", self.on_logging_changed)
+        cbt.connect("changed", self.on_logging_changed)        
         tree_iter = cbt.get_model().get_iter_first()
+        tree_iter = cbt.get_model().get_iter_from_string('4')
         cbt.set_active_iter(tree_iter)
         Sys.clear()
         Sys.dprint('INIT UI')
@@ -135,7 +135,7 @@ class AppGui(Gui):
             return thread
         cliargs = ['kirmah-cli.py', 'split', '-df', '/media/Hermes/webbakup/The Raven.avi', '-z', '-r', '-m', '-o', '/home/dev/git_repos/kirmah2.15/The Raven.avi.kmh']
         cliargs = self.app.getCall()
-        self.thkmh = getKmhThread(self.thread_finished, self.thread_interrupted, self.thread_progress, None, cliargs)
+        self.thkmh = getKmhThread(self.thread_finished, self.thread_interrupted, self.thread_progress, None, cliargs, Sys.g.MPEVENT)
         self.thkmh.start()
 
 

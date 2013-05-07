@@ -31,91 +31,33 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ module cli ~~
 
-from    optparse        import OptionParser, OptionGroup
-import  kirmah.conf     as conf
-from    kirmah.cliapp   import CliApp
+from    optparse        import OptionGroup
 from    psr.sys         import Sys, Io, Const, init
 from    psr.log         import Log
-
-if not Sys.isUnix : Const.LINE_SEP_CHAR = '-'
-
-
-def printLineSep(sep,lenSep):
-    """"""
-    s = sep*lenSep
-    Sys.print(s, Sys.CLZ_HEAD_LINE)
-    return [(s, Const.CLZ_HEAD_SEP)]
-
-
-def printHeaderTitle(title):
-    """"""
-    s = ' == '+title+' == '
-    Sys.print(s, Sys.CLZ_HEAD_APP, False, True)
-    return [(s, Const.CLZ_HEAD_APP)]
-
-
-def printHeaderPart(label,value):
-    """"""
-    a, b, c = ' [',':' ,'] '
-    Sys.print(a    , Sys.CLZ_HEAD_SEP, False)
-    Sys.print(label, Sys.CLZ_HEAD_KEY, False)
-    Sys.print(b    , Sys.CLZ_HEAD_SEP, False)
-    Sys.print(value, Sys.CLZ_HEAD_VAL, False)
-    Sys.print(c    , Sys.CLZ_HEAD_SEP, False)
-    return [(a,Const.CLZ_HEAD_SEP),(label,Const.CLZ_HEAD_KEY),(b,Const.CLZ_HEAD_SEP),(value,Const.CLZ_HEAD_VAL),(c,Const.CLZ_HEAD_SEP)]
-
-
-class _OptionParser(OptionParser):
-    """A simplified OptionParser"""
-
-    def format_description(self, formatter):
-        return self.description
-
-
-    def format_epilog(self, formatter):
-        return self.epilog
-
-
-    def error(self, errMsg, errData=None):
-        self.print_usage('')
-        Cli.error_cmd(self, (errMsg,))
+from    psr.cli         import AbstractCli
+from    kirmah.cliapp   import CliApp
+import  kirmah.conf     as conf
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ class Cli ~~
 
-class Cli:
+class Cli(AbstractCli):
 
     def __init__(self, path, remote=False, rwargs=None, thread=None, loglvl=Const.LOG_DEFAULT):
         """"""
-        if thread is not None :
-            Sys.g.THREAD_CLI               = thread
-            Sys.g.GUI                      = True
-        else :
-            Sys.g.GUI = False
+        AbstractCli.__init__(self, conf)
 
 
-        self.HOME   = conf.DEFVAL_USER_PATH
-        self.DIRKEY = self.HOME+'.'+conf.PRG_NAME.lower()+Sys.sep
+        Cli.HOME   = conf.DEFVAL_USER_PATH
+        Cli.DIRKEY = Cli.HOME+'.'+conf.PRG_NAME.lower()+Sys.sep
         if not Sys.isUnix() :
             CHQ     = '"'
             self.HOME   = 'C:'+Sys.sep+conf.PRG_NAME.lower()+Sys.sep
             self.DIRKEY = self.HOME+'keys'+Sys.sep
-        Sys.mkdir_p(self.DIRKEY)
+        Sys.mkdir_p(Cli.DIRKEY)
 
-        parser             = _OptionParser()
-        parser.print_help  = self.print_help
-        parser.print_usage = self.print_usage
-
-        gpData             = OptionGroup(parser, '')
-
-        parser.add_option('-v', '--version'       , action='store_true', default=False)
-        parser.add_option('-d', '--debug'         , action='store_true', default=False)
-        parser.add_option('-f', '--force'         , action='store_true', default=False)
-        parser.add_option('-q', '--quiet'         , action='store_true', default=False)
-
-        parser.add_option('--no-color'            , action='store_true' , default=False)
-
+        gpData = OptionGroup(self.parser, '')
         gpData.add_option('-a', '--fullcompress'  , action='store_true' )
         gpData.add_option('-z', '--compress'      , action='store_true' )
         gpData.add_option('-Z', '--nocompress'    , action='store_true' )
@@ -128,35 +70,38 @@ class Cli:
         gpData.add_option('-l', '--length'        , action='store', default=1024)
         gpData.add_option('-p', '--parts'         , action='store', default=22)
         gpData.add_option('-o', '--outputfile'    , action='store')
-        parser.add_option_group(gpData)
+        self.parser.add_option_group(gpData)
 
         # rewrite argv sended by remote
         if rwargs is not None :
             import sys
             sys.argv = rwargs
 
-        (o, a) = parser.parse_args()
+        (o, a) = self.parser.parse_args()
 
-        Sys.g.QUIET = o.quiet
+        Sys.g.QUIET      = o.quiet
+        Sys.g.THREAD_CLI = thread
+        Sys.g.GUI        = thread is not None
 
         init(conf.PRG_NAME, o.debug, remote, not o.no_color, loglvl)
-
+        
+        
         if not a:
 
             try :
                 if not o.help :
-                    self.error_cmd(('no command specified',))
+                    Cli.error_cmd(('no command specified',))
                 else :
                     Sys.clear()
-                    parser.print_help()
+                    Cli.print_help()
             except :
-                self.error_cmd(('no command specified',))
+                Cli.error_cmd(('no command specified',))
 
         else:
 
             if a[0] == 'help':
                 Sys.clear()
-                parser.print_help()
+                Cli.print_help()
 
             elif a[0] in ['key','enc','dec','split','merge'] :
 
@@ -166,9 +111,9 @@ class Cli:
                     app.onCommandKey()
                 else :
                     if not len(a)>1   :
-                        self.error_cmd((('an ',('inputFile',Sys.Clz.fgb3),' is required !'),))
+                        Cli.error_cmd((('an ',('inputFile',Sys.Clz.fgb3),' is required !'),))
                     elif not Io.file_exists(a[1]):
-                        self.error_cmd((('the file ',(a[1], Sys.Clz.fgb3), ' doesn\'t exists !'),))
+                        Cli.error_cmd((('the file ',(a[1], Sys.Clz.fgb3), ' doesn\'t exists !'),))
 
                     elif a[0]=='enc'  : app.onCommandEnc()
                     elif a[0]=='dec'  : app.onCommandDec()
@@ -180,59 +125,21 @@ class Cli:
                         Sys.g.LOG_QUEUE.put(Sys.g.SIGNAL_STOP)
 
             else :
-                self.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),))
+                Cli.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),))
 
         if not o.quiet : Sys.dprint()
 
 
-    def clean(self):
+    @staticmethod
+    def print_usage(data, withoutHeader=False):
         """"""
-        print('cleaning')
-
-
-    def error_cmd(self, data):
-        """"""
-        self.print_usage('')
-        Sys.dprint()
-        Sys.pwarn(data, True)
-        self.exit(1)
-
-
-    def exit(self, code):
-        """"""
-        if Sys.isUnix() : Sys.exit(code)
-
-
-    def print_header(self):
-        """"""
-        a = printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
-        b = printHeaderTitle(conf.PRG_CLI_NAME)
-        c = printHeaderPart('version'  ,conf.PRG_VERS)
-        d = printHeaderPart('author'   ,conf.PRG_AUTHOR)
-        e = printHeaderPart('license'  ,conf.PRG_LICENSE)
-        f = printHeaderPart('copyright',conf.PRG_COPY)
-        Sys.print(' ', Sys.Clz.OFF)
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)        
-        Sys.wlog(a)
-        Sys.wlog(b + c + d + e + f )
-        Sys.wlog(a)
-        Sys.wlog(Sys.dprint())
-
-
-    def print_version(self, data):
-        """"""
-        self.print_header()
-
-
-    def print_usage(self, data, withoutHeader=False):
-        """"""
-        if not withoutHeader : self.print_header()
+        if not withoutHeader : Cli.print_header()
 
         Sys.print('  USAGE :\n'                , Sys.CLZ_HELP_CMD)
-        Sys.print('    '+conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
+        Sys.print('    '+Cli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
         Sys.print('help '                      , Sys.CLZ_HELP_CMD)
 
-        Sys.print('    '+conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
+        Sys.print('    '+Cli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
         Sys.print('key   '                     , Sys.CLZ_HELP_CMD, False)
         Sys.print('[ -l '                      , Sys.CLZ_HELP_ARG, False)
         Sys.print('{'                          , Sys.CLZ_HELP_PARAM, False)
@@ -244,7 +151,7 @@ class Cli:
         Sys.print('}'                          , Sys.CLZ_HELP_PARAM, False)
         Sys.print(']'                          , Sys.CLZ_HELP_ARG)
 
-        Sys.print('    '+conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
+        Sys.print('    '+Cli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
         Sys.print('enc   '                     , Sys.CLZ_HELP_CMD, False)
         Sys.print('{'                          , Sys.CLZ_HELP_PARAM, False)
         Sys.print('inputFile'                  , Sys.CLZ_HELP_PARAM, False)
@@ -321,10 +228,11 @@ class Cli:
         Sys.print(']'                          , Sys.CLZ_HELP_ARG)
 
 
-    def print_options(self):
+    @staticmethod
+    def print_options():
         """"""
         Sys.dprint('\n')
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
 
         Sys.print('  MAIN OPTIONS :\n'                                       , Sys.CLZ_HELP_CMD)
         Sys.print(' '*4+'-v'.ljust(13,' ')+', --version'                     , Sys.CLZ_HELP_ARG)
@@ -435,13 +343,14 @@ class Cli:
         Sys.dprint('\n')
 
 
-    def print_help(self):
+    @staticmethod
+    def print_help():
         """"""
-        self.print_header()
-        Sys.print(conf.PRG_DESC, Sys.CLZ_HELP_DESC)
-        self.print_usage('',True)
-        self.print_options()
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.print_header()
+        Sys.print(Cli.conf.PRG_DESC, Sys.CLZ_HELP_DESC)
+        Cli.print_usage('',True)
+        Cli.print_options()
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.dprint()
         Sys.print('  EXEMPLES :\n', Sys.CLZ_HELP_CMD)
         CHQ  = "'"
@@ -456,16 +365,16 @@ class Cli:
         Sys.print(' '*8+'# generate a new crypted key (default length is 1024) in a specified location', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('key -o ', Sys.CLZ_HELP_CMD, False)
-        Sys.print(self.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM)
+        Sys.print(Cli.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM)
 
 
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.print('\n'+' '*4+'command encrypt :', Sys.CLZ_HELP_CMD)
 
         Sys.print(' '*8+'# encrypt specified file with default crypted key and default options', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('enc ', Sys.CLZ_HELP_CMD, False)
-        Sys.print(self.HOME+'mySecretTextFile.txt', Sys.CLZ_HELP_PARAM)
+        Sys.print(Cli.HOME+'mySecretTextFile.txt', Sys.CLZ_HELP_PARAM)
 
         Sys.print(' '*8+'# encrypt specified file with specified crypted key (full compression, no random but mix mode)', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+'# on specified output location', Sys.CLZ_HELP_COMMENT)
@@ -473,7 +382,7 @@ class Cli:
         Sys.print('enc ', Sys.CLZ_HELP_CMD, False)
         Sys.print('mySecretTextFile.txt', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -aRm -k ' , Sys.CLZ_HELP_ARG, False)
-        Sys.print(self.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
+        Sys.print(Cli.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -o ' , Sys.CLZ_HELP_ARG, False)
         Sys.print('test.kmh', Sys.CLZ_HELP_PARAM)
 
@@ -485,20 +394,20 @@ class Cli:
         Sys.print('4', Sys.CLZ_HELP_PARAM)
 
 
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.print('\n'+' '*4+'command decrypt :', Sys.CLZ_HELP_CMD)
 
         Sys.print(' '*8+'# decrypt specified file with default crypted key', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('dec ', Sys.CLZ_HELP_CMD, False)
-        Sys.print(self.HOME+'mySecretFile.kmh', Sys.CLZ_HELP_PARAM)
+        Sys.print(Cli.HOME+'mySecretFile.kmh', Sys.CLZ_HELP_PARAM)
 
         Sys.print(' '*8+'# decrypt specified file with specified crypted key on specified output location', Sys.CLZ_HELP_COMMENT)
-        Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
+        Sys.print(' '*8+Cli.conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('dec ', Sys.CLZ_HELP_CMD, False)
         Sys.print('myEncryptedSecretFile.kmh', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -k ' , Sys.CLZ_HELP_ARG, False)
-        Sys.print(self.HOME+'.kirmah'+Sys.sep+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
+        Sys.print(Cli.HOME+'.kirmah'+Sys.sep+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -o ' , Sys.CLZ_HELP_ARG, False)
         Sys.print('myDecryptedSecretFile.txt', Sys.CLZ_HELP_PARAM)
 
@@ -510,13 +419,13 @@ class Cli:
         Sys.print('4'    , Sys.CLZ_HELP_PARAM)
 
 
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.print('\n'+' '*4+'command split :', Sys.CLZ_HELP_CMD)
 
         Sys.print(' '*8+'# split specified file with default crypted key', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('split ', Sys.CLZ_HELP_CMD, False)
-        Sys.print(self.HOME+'myBigBinaryFile.avi', Sys.CLZ_HELP_PARAM)
+        Sys.print(Cli.HOME+'myBigBinaryFile.avi', Sys.CLZ_HELP_PARAM)
 
         Sys.print(' '*8+'# split specified file on 55 parts with specified crypted key on specified output location', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
@@ -525,27 +434,27 @@ class Cli:
         Sys.print(' -p ' , Sys.CLZ_HELP_ARG, False)
         Sys.print('55'   , Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -k ' , Sys.CLZ_HELP_ARG, False)
-        Sys.print(self.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
+        Sys.print(Cli.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -o ' , Sys.CLZ_HELP_ARG, False)
         Sys.print('myBigBinaryFile.encrypted', Sys.CLZ_HELP_PARAM)
 
 
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.print('\n'+' '*4+'command merge :', Sys.CLZ_HELP_CMD)
 
         Sys.print(' '*8+'# merge specified splitted file with default crypted key', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('merge ', Sys.CLZ_HELP_CMD, False)
-        Sys.print(self.HOME+'6136bd1b53d84ecbad5380594eea7256176c19e0266c723ea2e982f8ca49922b.kcf', Sys.CLZ_HELP_PARAM)
+        Sys.print(Cli.HOME+'6136bd1b53d84ecbad5380594eea7256176c19e0266c723ea2e982f8ca49922b.kcf', Sys.CLZ_HELP_PARAM)
 
         Sys.print(' '*8+'# merge specified tark splitted file with specified crypted key on specified output location', Sys.CLZ_HELP_COMMENT)
         Sys.print(' '*8+conf.PRG_CLI_NAME+' ', Sys.CLZ_HELP_PRG, False)
         Sys.print('merge ', Sys.CLZ_HELP_CMD, False)
         Sys.print('myBigBinaryFile.encrypted.tark', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -k ' , Sys.CLZ_HELP_ARG, False)
-        Sys.print(self.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
+        Sys.print(Cli.DIRKEY+'.myNewKey', Sys.CLZ_HELP_PARAM, False)
         Sys.print(' -o ' , Sys.CLZ_HELP_ARG, False)
         Sys.print('myBigBinaryFile.decrypted.avi', Sys.CLZ_HELP_PARAM)
 
-        printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
+        Cli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.dprint()

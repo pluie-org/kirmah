@@ -21,15 +21,15 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkFileFilter" id="filefilter1">
-    <patterns>
-      <pattern>*.key</pattern>
-    </patterns>
-  </object>
   <object class="GtkFileFilter" id="filefilter2">
     <patterns>
       <pattern>*.kmh</pattern>
       <pattern>*</pattern>
+    </patterns>
+  </object>
+  <object class="GtkFileFilter" id="filefilter1">
+    <patterns>
+      <pattern>*.key</pattern>
     </patterns>
   </object>
   <object class="GtkFileFilter" id="filefilter3">
@@ -520,7 +520,6 @@
                               <item translatable="yes">DISABLED</item>
                               <item translatable="yes">LOG_ALL</item>
                               <item translatable="yes">LOG_DEBUG</item>
-                              <item translatable="yes">LOG_WARN</item>
                               <item translatable="yes">LOG_UI</item>
                               <item translatable="yes">LOG_DEFAULT</item>
                             </items>
@@ -845,7 +844,6 @@
             <child>
               <object class="GtkButton" id="button3">
                 <property name="label" translatable="yes">show log</property>
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
                 <property name="no_show_all">True</property>

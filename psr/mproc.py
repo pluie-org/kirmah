@@ -31,7 +31,7 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~ module mproc ~~
 
-from multiprocessing                import Process, current_process, Pipe, Lock
+from multiprocessing                import Process, current_process, Pipe
 from multiprocessing.connection     import wait
 from threading                      import current_thread
 from psr.sys                        import Sys, Const, init
@@ -43,22 +43,22 @@ from psr.log                        import Log
 class Worker:
 
     @Log(Const.LOG_BUILD)
-    def __init__(self, appname, debug, gui, color, loglvl, ppid, lock, id, wp, delay, task, *args, **kwargs):
-
+    def __init__(self, appname, debug, gui, color, loglvl, ppid, event, id, wp, delay, task, *args, **kwargs):
         def mptask(id, *args, **kwargs):
             Sys.sendMainProcMsg(Manager.MSG_INIT, None)
-            otask = task(id=id, lock=lock, *args, **kwargs)
+            otask = task(id=id, event=event, *args, **kwargs)
             Sys.sendMainProcMsg(Manager.MSG_END, None)
             return otask
 
         init(appname, debug, ppid, color, loglvl)
-        Sys.g.WPIPE = wp
-        Sys.g.CPID  = id
-        Sys.g.GUI   = gui
-        Sys.g.RLOCK = lock
+        Sys.g.WPIPE   = wp
+        Sys.g.CPID    = id
+        Sys.g.GUI     = gui
+        # initialize child process event with parent process event
+        Sys.g.MPEVENT = event
         if delay : Sys.sleep(delay)
         mptask(id, *args, **kwargs)
-        # don't directly close pipe 'cause of eventual loging
+        # don't directly close pipe 'cause of eventual logging
         # pipe will auto close on terminating child process
 
 
@@ -81,7 +81,7 @@ class Manager:
     checktime    = None
 
     @Log(Const.LOG_UI)
-    def __init__(self, task, nproc=2, delay=None, lock=None, *args, **kwargs):
+    def __init__(self, task, nproc=2, delay=None, event=None, *args, **kwargs):
         """"""
         self.readers = []
         self.plist   = []
@@ -92,7 +92,7 @@ class Manager:
             r, w = Pipe(duplex=False)
             self.readers.append(r)
             # (process, wpipe)
-            p = Process(target=Worker, args=tuple([Sys.g.PRJ_NAME, Sys.g.DEBUG, Sys.g.GUI, Sys.g.COLOR_MODE, Sys.g.LOG_LEVEL, Sys.getpid(), lock, id, w, delay, task])+tuple(args), kwargs=kwargs)
+            p = Process(target=Worker, args=tuple([Sys.g.PRJ_NAME, Sys.g.DEBUG, Sys.g.GUI, Sys.g.COLOR_MODE, Sys.g.LOG_LEVEL, Sys.getpid(), event, id, w, delay, task])+tuple(args), kwargs=kwargs)
             self.plist.append((p, w))
 
     @Log(Const.LOG_APP)

@@ -121,10 +121,11 @@ class CliApp:
             except Exception as e :
                 done = False
                 print(e)
+                raise e
                 pass
 
         if not Sys.g.QUIET :
-            self.onend_cmd('Encrypting file', self.stime, done, self.o.outputfile)
+            self.onend_cmd('Kirmah Encrypt', self.stime, done, self.o.outputfile)
 
 
     @Log(Const.LOG_DEBUG)
@@ -164,7 +165,7 @@ class CliApp:
                     raise e
 
         if not Sys.g.QUIET :
-            self.onend_cmd('Decrypting file', self.stime, done, self.o.outputfile)
+            self.onend_cmd('Kirmah Decrypt', self.stime, done, self.o.outputfile)
 
 
     @Log(Const.LOG_DEBUG)
@@ -173,7 +174,7 @@ class CliApp:
         done  = True
         Sys.cli_emit_progress(1)
         if not self.o.parts is None and not(int(self.o.parts)>=12 and int(self.o.parts) <=62) :
-            self.error_cmd((('invalid option ',('-p, --parts', Sys.Clz.fgb3), ' value (', ('12',Sys.Clz.fgb3),' to ', ('62',Sys.Clz.fgb3),')'),))
+            self.parser.error_cmd((('invalid option ',('-p, --parts', Sys.Clz.fgb3), ' value (', ('12',Sys.Clz.fgb3),' to ', ('62',Sys.Clz.fgb3),')'),))
         else : self.o.parts = int(self.o.parts)
 
         if not Sys.g.QUIET : self.parser.print_header()
@@ -199,30 +200,30 @@ class CliApp:
                 p      = 85
                 Sys.cli_emit_progress(p)
                 Io.touch(kcf, times)
-                frav = 0.24                
+                frav = 0.24
                 for row in hlst['data']:
                     p += frav
-                    Io.touch(row[1]+km.EXT,times)                    
+                    Io.touch(row[1]+km.EXT,times)
                     Sys.cli_emit_progress(p)
                 if self.o.outputfile is not None :
                     d = Sys.datetime.now()
                     if Sys.g.DEBUG : Sys.wlog(Sys.dprint())
-                    Sys.ptask('Preparing tark file')            
+                    Sys.ptask('Preparing tark file')
                     hlst['data'] = sorted(hlst['data'], key=lambda lst: lst[4])
                     with tarfile.open(self.o.outputfile, mode='w') as tar:
                         tar.add(kcf, arcname=Sys.basename(kcf))
                         p    = 90
-                        for row in hlst['data']:                            
+                        for row in hlst['data']:
                             tar.add(row[1]+km.EXT, arcname=Sys.basename(row[1]+km.EXT))
                             p += frav
                             Sys.cli_emit_progress(p)
                     Sys.pstep('Packing destination file', d, True)
                     d = Sys.datetime.now()
                     Sys.ptask('Finalize')
-                    for row in hlst['data']:                        
+                    for row in hlst['data']:
                         Io.removeFile(row[1]+km.EXT)
                         p += frav
-                        Sys.cli_emit_progress(p)                        
+                        Sys.cli_emit_progress(p)
                     Io.removeFile(kcf)
                     Sys.pstep('Cleaning', d, True)
 
@@ -235,11 +236,11 @@ class CliApp:
                     #~ raise e
                 elif not Sys.g.QUIET :
                     Sys.pwarn((str(e),))
-        
+
         if not Sys.g.QUIET:
-            Sys.cli_emit_progress(100) 
+            Sys.cli_emit_progress(100)
             self.onend_cmd('Kirmah Split', self.stime, done, self.o.outputfile)
-            
+
 
 
     @Log(Const.LOG_DEBUG)
@@ -253,7 +254,7 @@ class CliApp:
             toPath = None
             try :
                 Sys.ptask()
-                
+
                 key    = Io.get_data(self.o.keyfile)
                 km     = Kirmah(key)
 
@@ -303,7 +304,7 @@ class CliApp:
 
     @Log(Const.LOG_DEBUG)
     def onend_cmd(self, title, stime, done, outputfile):
-        """"""        
+        """"""
         s = Const.LINE_SEP_CHAR*Const.LINE_SEP_LEN
         Sys.print(s, Sys.CLZ_HEAD_LINE)
         Sys.wlog([(s, Const.CLZ_HEAD_SEP)])

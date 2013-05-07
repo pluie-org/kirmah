@@ -102,7 +102,7 @@ class Log:
             if t is not None :
                 bind_data += Sys.pdate(t.timetuple() if enter else Sys.datetime.now().timetuple(), isChildProc)
 
-            a, b, c, d, e = ('=> ' if enter else '<= '), '['+str(Sys.getpid())+']', ' '+sign+'(', Log._formatArgs(args), ') '
+            a, b, c, d, e = ('=> ' if enter else '<= '), '['+str(Sys.getpid()).rjust(5,' ')+']', ' '+sign+'(', Log._formatArgs(args), ') '
             if not isChildProc :
                 Sys.print(a , Sys.CLZ_IO  , False)
                 Sys.print(b , Sys.CLZ_PID if  not isChildProc else Sys.CLZ_CPID, False)
