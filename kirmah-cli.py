@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -36,8 +36,8 @@ def main():
         c = 0
         Cli('.'+Sys.sep)
     except Exception as e :
-        raise e
         Sys.pwarn((('main : ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
+        #~ raise e
         c = 1
     return c
 

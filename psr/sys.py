@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -353,18 +353,18 @@ class Sys:
 
         if not dbcall : Sys.print(w, clzp, False, False)
         bdata  = []
-        if Sys.g.DEBUG :
+        if not Sys.g.QUIET :
             bdata.append((w, uiclzp))
         for i, line in enumerate(data) :
             if i > 0 :
                 if not dbcall : Sys.print(' '*len(w), clz, False, False)
-                if Sys.g.DEBUG :
+                if not Sys.g.QUIET :
                     bdata.append((' '*len(w), uiclz))
             if isinstance(line,str) :
                 s = line.ljust(length-len(w),' ')
                 if not dbcall : Sys.print(s, clz, True, True)
 
-                if Sys.g.DEBUG :
+                if not Sys.g.QUIET :
                     bdata.append((s, uiclz))
                     Sys.wlog(bdata)
                     bdata = []
@@ -381,7 +381,7 @@ class Sys:
                         sl += len(p[0])
                 s = ' '.ljust(length-sl-len(w),' ')
                 if not dbcall : Sys.print(s, clz, True, True)
-                if Sys.g.DEBUG :
+                if not Sys.g.QUIET :
                     bdata.append((s, uiclz))
                     Sys.wlog(bdata)
                     bdata = []

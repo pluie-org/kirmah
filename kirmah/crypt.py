@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -669,11 +669,13 @@ class Kirmah:
             clist = literal_eval(data)
             Sys.removeFile('.cfg')
             theList = self.ck.getHashList(clist['name'], clist['count'], True)
-            dirs    = Sys.dirname(Sys.realpath(toPath)) if toPath is not None else None
             ext     = ''
             if toPath is None :
                 toPath = clist['name']
+            elif Sys.isdir(toPath) :
+                toPath += clist['name']
             toPath, ext = Sys.getFileExt(toPath)
+            dirs    = (Sys.dirname(Sys.realpath(toPath)) if toPath is not None else Sys.dirname(Sys.realpath(fromPath)))+Sys.sep
             Sys.cli_emit_progress(10)
             toPath  = self.merge(theList, toPath, ext, uid, dirs)
             Sys.removeFile(fromPath)
@@ -688,16 +690,21 @@ class Kirmah:
             p = 0
             # ensure correct order
             hlst['data'] = sorted(hlst['data'], key=lambda lst: lst[0])
-
-            if dirs is not None and dirs!='none' :
-                dirPath = Sys.join(self.DIR_DEPLOY,dirs)+Sys.sep
-                Sys.mkdir_p(dirPath)
-            else: dirPath = self.DIR_DEPLOY
-            filePath = dirPath+fileName
+            #~ print(hlst['head'])
+            #~ for row in hlst['data']:
+                #~ print(row)
+            #~ if dirs is not None and dirs!='none' :
+                #~ dirPath = Sys.join(self.DIR_DEPLOY,dirs)+Sys.sep
+                #~ Sys.mkdir_p(dirPath)
+            #~ else: dirPath = self.DIR_DEPLOY
+            #~ print('dirPath')
+            #~ print(dirPath)
+            #~ filePath = dirPath+fileName
+            filePath = fileName
             if Io.file_exists(filePath+ext):
                 filePath += '-'+str(uid)
-            filePath = Sys.abspath(filePath+ext)
-            depDir   = self.DIR_INBOX if not fake else self.DIR_OUTBOX
+            filePath += ext
+            depDir   = dirs
             perc     = 10
             frav     = 2.7
             with Io.wfile(filePath) as fo :
@@ -895,11 +902,9 @@ class Kirmah:
                         if Sys.g.DEBUG : Sys.wlog(Sys.dprint())
                         if decHeader['smode'] == self.mark[fsize%len(self.mark)] :
                             Sys.pstep('Reading Header', d, True)
-                            #~ print('ok valid')
-                            """"""
                         else :
-                            Sys.pstep('Reading Header', d, False)
-                            raise BadKeyException()
+                            Sys.pstep('Reading Header', d, False, False, False)
+                            raise BadKeyException('wrong key')
 
                     compend, compstart = not decHeader['cmode']== KirmahHeader.COMP_NONE, decHeader['cmode']== KirmahHeader.COMP_ALL
                     fp, tp             = fromPath, self.tmpPath1
@@ -1022,6 +1027,7 @@ class Kirmah:
             fp, tp, compstart = self.decrypt_sp_start(fromPath, toPath, emit=emit)
             self.decrypt_mproc(fp, tp, nproc, emit=emit)
             self.decrypt_sp_end(tp, toPath, compstart, emit=emit)
+
         Sys.cli_emit_progress(100)
 
 
@@ -1211,4 +1217,4 @@ class Noiser:
 # ~~ class BadKeyException ~~
 
 class BadKeyException(BaseException):
-    pass
+    """"""

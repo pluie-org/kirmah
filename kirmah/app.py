@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -167,25 +167,28 @@ class KirmahApp:
         if path is not None :
             self.dst = ''.join([path, Sys.sep, '' if self.src is None else Sys.basename(self.src)])
             if self.encmode:
-                self.dst = ''.join([self.dst, conf.DEFVAL_CRYPT_EXT])
+                self.dst = ''.join([self.dst, Kirmah.EXT if not self.splitmode else Kirmah.EXT_TARK])
             else :
                 self.dst, ext = Sys.getFileExt(self.dst)
-            if Io.file_exists(self.dst):
-                raise FileNeedOverwriteException(self.dst)
+                if not ext == (Kirmah.EXT if not self.splitmode else Kirmah.EXT_TARK):
+                    self.dst += ext
+            #~ if Io.file_exists(self.dst):
+                #~ raise FileNeedOverwriteException(self.dst)
         else : self.dst = None
 
 
     @Log(Const.LOG_DEFAULT)
     def getCall(self):
+        q      = ''
         action = ('enc' if self.encmode else 'dec') if not self.splitmode else ('split' if self.encmode else 'merge')
         comp   = '-a'   if self.compression==1 else ('-z' if self.compression==2 else '-Z')
         mproc  = ''     if self.nproc==0 or self.splitmode else '-j'+str(self.nproc)
         rmode  = '-r'   if self.random else '-R '
         mmode  = '-m'   if self.mix else '-M'
         debug  = '-fd'  if Sys.g.DEBUG else '-f'
+        key    = '-k'+q+self.kpath+q if self.kpath != self.getDefaultKeyPath() else ''
         #~ q      = '"'
-        q      = ''
-        call   = ['kirmah-cli.py',debug, action,q+self.src+q,comp,mproc,rmode,mmode,'-o',q+self.dst+q]
+        call   = ['kirmah-cli.py',debug, action,q+self.src+q,comp,mproc,rmode,mmode,'-o',q+self.dst+q,key]
         print('python '+(' '.join(call)))
         return call
 

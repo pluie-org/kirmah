@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -229,7 +229,7 @@ class AppGui(Gui):
         if not self.app.splitmode :
             for n in ['checkbutton2','checkbutton4','comboboxtext1','label12']:
                 self.disable(n, not self.app.encmode)
-        self.on_new_file_dest(self.get('filechooserbutton3'))
+        #~ self.on_new_file_dest(self.get('filechooserbutton3'))
         if self.start: self.refreshProceed()
 
 
@@ -259,26 +259,22 @@ class AppGui(Gui):
         try:
             self.app.setSourceFile(fc.get_filename())
             self.IS_SOURCE_DEF = True
-            self.on_new_file_dest(self.get('filechooserbutton3'))
         except FileNotFoundException as e:
             Sys.eprint('FileNotFoundException :' + str(fc.get_filename()), Const.ERROR)
             self.IS_SOURCE_DEF = False
-
-
-    @Log(Const.LOG_UI)
-    def on_dest_changed(self, fc, data=None):
-        """"""
-        self.on_new_file_dest(fc, data)
+        self.refreshProceed()
 
 
     @Log(Const.LOG_UI)
     def on_new_file_dest(self, fc, data=None):
         """"""
+        try :
+            self.app.setDestFile(fc.get_filename())
+            print(self.app.dst)
+        except Exception as e :
+            print(e)
+            pass
         if self.start:
-            try :
-                self.app.setDestFile(fc.get_filename())
-            except :
-                pass
             self.IS_DEST_DEF = True
             self.refreshProceed()
 
@@ -301,6 +297,7 @@ class AppGui(Gui):
         self.disable('spinbutton1',False)
         self.disable('filechooserbutton1',False)
         self.get('filechooserbutton1').set_current_folder(conf.DEFVAL_UKEY_PATH)
+        self.get('filechooserbutton1').set_filename(conf.DEFVAL_UKEY_PATH+'.rename.key')
 
 
     @Log(Const.LOG_UI)
@@ -351,8 +348,8 @@ class AppGui(Gui):
     @Log(Const.LOG_UI)
     def refreshProceed(self):
         """"""
-        if self.start :
-            self.get('button1').set_sensitive(self.IS_DEST_DEF and self.IS_SOURCE_DEF)
+        #~ if self.start :
+        self.get('button1').set_sensitive(self.IS_DEST_DEF and self.IS_SOURCE_DEF)
 
 
     @Log(Const.LOG_UI)
@@ -369,12 +366,12 @@ class AppGui(Gui):
                 self.PROCEED = True
                 self.STOPPED = False
                 btn.set_sensitive(False)
-                self.on_new_file_dest(self.get('filechooserbutton3'))
-                self.pb = self.get('progressbar1')
-                self.pb.set_fraction(0)
-                self.pb.show()
-                self.pb.pulse()
+                self.app.setDestFile(self.get('filechooserbutton3').get_filename())
                 if not Io.file_exists(self.app.dst) or self.warnDialog('file '+self.app.dst+' already exists', 'Overwrite file ?'):
+                    self.pb = self.get('progressbar1')
+                    self.pb.set_fraction(0)
+                    self.pb.show()
+                    self.pb.pulse()
                     btn.set_sensitive(True)
                     btn.set_label(conf.GUI_LABEL_CANCEL)
                     self.clear_log(self.get('checkbutton3'))
@@ -395,6 +392,9 @@ class AppGui(Gui):
             self.thkmh.cancel()
         else :
             self.textbuffer.insert_at_cursor('Kmh Thread is not Alive\n')
+            self.on_proceed_end(True)
+            self.pb.hide()
+            self.show_log()
 
 
     @Log(Const.LOG_UI)

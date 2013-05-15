@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -39,7 +39,7 @@ PRG_NAME            = 'Kirmah'
 PRG_PACKAGE         = PRG_NAME.lower()
 PRG_SCRIPT          = PRG_NAME.lower()
 PRG_CLI_NAME        = PRG_SCRIPT+'-cli'
-PRG_VERS            = '2.1'
+PRG_VERS            = '2.18'
 PRG_AUTHOR          = 'a-Sansara'
 PRG_COPY            = 'pluie.org'
 PRG_YEAR            = '2013'

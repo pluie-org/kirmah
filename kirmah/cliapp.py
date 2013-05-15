@@ -4,7 +4,7 @@
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
-#  version   : 2.17
+#  version   : 2.18
 #  date      : 2013
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
@@ -158,11 +158,9 @@ class CliApp:
 
                 km.decrypt(self.a[1], self.o.outputfile, nproc)
 
-            except BadKeyException as e :
+            except BadKeyException:
                 done = False
-                Sys.pwarn(('BadKeyException',))
-                if Sys.g.DEBUG :
-                    raise e
+                Sys.pwarn((('BadKeyException : ',('wrong key ',Sys.CLZ_WARN_PARAM), ' !'),), False)
 
         if not Sys.g.QUIET :
             self.onend_cmd('Kirmah Decrypt', self.stime, done, self.o.outputfile)
@@ -257,35 +255,52 @@ class CliApp:
 
                 key    = Io.get_data(self.o.keyfile)
                 km     = Kirmah(key)
-
+                kcf    = None
+                istar  = True
                 try:
                     import tarfile
+                    dpath = Sys.dirname(Sys.realpath(self.o.outputfile))+Sys.sep if self.o.outputfile is not None else Sys.dirname(Sys.realpath(self.a[1]))+Sys.sep
+                    if self.o.outputfile is None :
+                        self.o.outputfile = dpath
                     with tarfile.open(self.a[1], mode='r') as tar:
-                        dpath = Sys.dirname(Sys.realpath(self.o.outputfile))+Sys.sep if self.o.outputfile is not None else '.'+Sys.sep
-                        print(dpath)
+                        #~ print(dpath)
                         tar.extractall(path=dpath)
                         kcf = None
                         for tarinfo in tar:
-                            print(tarinfo.name)
+                            #~ print(tarinfo.name)
                             if tarinfo.isreg() and tarinfo.name[-4:]=='.kcf':
+                                #~ print(dpath+tarinfo.name)
                                 kcf = dpath+tarinfo.name
-                        if kcf is not None :
-                            toPath = km.mergeFile(kcf)
-                except Exception as e:
-                    Sys.pwarn((('onCommandMerge : ',(str(e),Sys.CLZ_WARN_PARAM), ' !'),), False)
-                    raise e
-                    toPath = km.mergeFile(self.a[1])
-                if self.o.outputfile is not None :
-                    Io.rename(toPath, self.o.outputfile)
-                    toPath = self.o.outputfile
+                    if kcf is not None :
+                        km.DIR_OUTBOX = dpath
+                        toPath = km.mergeFile(kcf, self.o.outputfile)
+                except BadKeyException:
+                    Sys.pwarn((('BadKeyException : ',('wrong key ',Sys.CLZ_WARN_PARAM), ' !'),), False)
+                    done = False
+
+                except Exception :
+                    istar  = False
+                    toPath = km.mergeFile(self.a[1], self.o.outputfile)
+
+                #~ if self.o.outputfile is not None :
+                #~ Io.rename(toPath, self.o.outputfile)
+                #~ toPath = self.o.outputfile
+
+            except BadKeyException:
+                Sys.pwarn((('BadKeyException : ',('wrong key ',Sys.CLZ_WARN_PARAM), ' !'),), False)
+                done = False
 
             except Exception as e :
                 done = False
                 if Sys.g.DEBUG :
                     print(e)
-                    raise e
                 elif not Sys.g.QUIET :
                     Sys.pwarn((str(e),))
+        if not done :
+            if istar :
+                with tarfile.open(self.a[1], mode='r') as tar:
+                    for tarinfo in tar:
+                        Sys.removeFile(dpath+tarinfo.name)
 
         if not Sys.g.QUIET :
             self.onend_cmd('Kirmah Merge', self.stime, done, toPath)
@@ -312,6 +327,7 @@ class CliApp:
         Sys.print(s, Sys.CLZ_HEAD_LINE)
         Sys.wlog([(s, Const.CLZ_HEAD_SEP)])
         if done and outputfile is not None:
+            Sys.cli_emit_progress(100)
             Sys.print(' '*5+Sys.realpath(outputfile), Sys.Clz.fgB1, False)
             Sys.print(' ('+Sys.getFileSize(outputfile)+')', Sys.Clz.fgB3)
             bdata = [(' '*5+Sys.realpath(outputfile), 'io'),(' ('+Sys.getFileSize(outputfile)+')','func')]

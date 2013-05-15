@@ -720,7 +720,6 @@
                             <property name="orientation">vertical</property>
                             <property name="action">select-folder</property>
                             <signal name="file-set" handler="on_new_file_dest" swapped="no"/>
-                            <signal name="current-folder-changed" handler="on_dest_changed" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">True</property>
@@ -917,6 +916,8 @@
                   <object class="GtkProgressBar" id="progressbar1">
                     <property name="can_focus">False</property>
                     <property name="no_show_all">True</property>
+                    <property name="margin_left">5</property>
+                    <property name="margin_right">5</property>
                   </object>
                   <packing>
                     <property name="expand">True</property>

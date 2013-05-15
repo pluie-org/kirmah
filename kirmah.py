@@ -36,8 +36,8 @@ def main():
         c = 0
         AppGui()
     except Exception as e:
-        raise e
         Sys.pwarn((('main : ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
+        #~ raise e
         c = 1
     return c
 
