@@ -288,7 +288,7 @@ class CliApp:
                     Sys.pwarn((str(e),))
 
         if not Sys.g.QUIET :
-            self.onend_cmd('Merging file', self.stime, done, toPath)
+            self.onend_cmd('Kirmah Merge', self.stime, done, toPath)
 
 
     @Log(Const.LOG_ALL)

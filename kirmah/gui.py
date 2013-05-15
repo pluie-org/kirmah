@@ -101,27 +101,27 @@ class AppGui(Gui):
         self.get('entry1').set_text(mark)
 
         Sys.g.UI_AUTO_SCROLL = True
-        self.textview    = self.get('textview1')        
+        self.textview    = self.get('textview1')
         self.textview.override_background_color(Gtk.StateFlags.NORMAL, Gdk.RGBA(0, 0, 0, 1.0))
         self.textview.modify_font(Pango.font_description_from_string ('DejaVu Sans Mono Book 11'))
         self.textbuffer  = self.textview.get_buffer()
         self.tags        = self.buildTxtTags(self.textbuffer)
         self.progressbar = self.get('progressbar1')
         cbt = self.get('comboboxtext1')
-        cbt.connect("changed", self.on_compression_changed)        
+        cbt.connect("changed", self.on_compression_changed)
         tree_iter = cbt.get_model().get_iter_first()
         print(cbt.get_model().get_string_from_iter(tree_iter))
         tree_iter = cbt.get_model().get_iter_from_string('3')
         cbt.set_active_iter(tree_iter)
         cbt = self.get('comboboxtext2')
-        cbt.connect("changed", self.on_logging_changed)        
+        cbt.connect("changed", self.on_logging_changed)
         tree_iter = cbt.get_model().get_iter_first()
         tree_iter = cbt.get_model().get_iter_from_string('4')
         cbt.set_active_iter(tree_iter)
         Sys.clear()
         Sys.dprint('INIT UI')
         self.start = True
-        self.thkmh = None 
+        self.thkmh = None
 
 
     @Log(Const.LOG_UI)
@@ -359,7 +359,6 @@ class AppGui(Gui):
     def on_proceed(self, btn):
         """"""
         if btn.get_label() == conf.GUI_LABEL_OK :
-            btn = self.get('button1')
             btn.set_label(conf.GUI_LABEL_PROCEED)
             self.PROCEED = False
             self.pb.hide()
@@ -367,10 +366,10 @@ class AppGui(Gui):
 
         else :
             if not self.PROCEED :
-                self.list_threads()
                 self.PROCEED = True
                 self.STOPPED = False
                 btn.set_sensitive(False)
+                self.on_new_file_dest(self.get('filechooserbutton3'))
                 self.pb = self.get('progressbar1')
                 self.pb.set_fraction(0)
                 self.pb.show()
@@ -388,7 +387,7 @@ class AppGui(Gui):
 
 
     @Log(Const.LOG_UI)
-    def halt_thread(self, *args):        
+    def halt_thread(self, *args):
         Sys.wlog(Sys.dprint())
         Sys.pwarn(('thread interrupt',), False)
         self.get('button1').set_sensitive(False)
@@ -404,11 +403,11 @@ class AppGui(Gui):
         try :
             btn = self.get('button1')
             btn.set_label('Proceed')
-            btn.set_sensitive(True)            
+            btn.set_sensitive(True)
             self.PROCEED = False
-            btn.set_label(conf.GUI_LABEL_OK)
+            if not abort : btn.set_label(conf.GUI_LABEL_OK)
             self.get('checkbutton3').hide()
-            
+
         except Exception as e:
             Sys.pwarn((('on_proceed_end : ',(str(e),Sys.CLZ_WARN_PARAM), ' !'),), False)
             pass

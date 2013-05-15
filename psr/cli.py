@@ -54,7 +54,7 @@ class TinyParser(OptionParser):
     def error(self, errMsg, errData=None):
         """"""
         self.print_usage('')
-        AbstractCli.error_cmd((errMsg,))
+        self.error_cmd((errMsg,))
 
 
 
@@ -88,8 +88,9 @@ class AbstractCli():
         if not Sys.isUnix : Const.LINE_SEP_CHAR = '-'
         AbstractCli.conf        = prgconf
         self.parser             = TinyParser()
-        self.parser.print_help  = AbstractCli.print_help
-        self.parser.print_usage = AbstractCli.print_usage
+        self.parser.print_help  = self.print_help
+        self.parser.print_usage = self.print_usage
+        self.parser.error_cmd   = self.error_cmd
 
         self.parser.add_option('-v', '--version'  , action='store_true', default=False)
         self.parser.add_option('-d', '--debug'    , action='store_true', default=False)
@@ -99,14 +100,12 @@ class AbstractCli():
         self.parser.add_option('--no-color'       , action='store_true' , default=False)
 
 
-    @staticmethod
-    def error_cmd(data):
+    def error_cmd(self, data, pusage=False):
         """"""
-        AbstractCli.print_usage('')
+        if pusage : self.print_usage('')
         Sys.dprint()
         Sys.pwarn(data, True)
         AbstractCli.exit(1)
-
 
     @staticmethod
     def exit(code):
@@ -197,8 +196,8 @@ class AbstractCli():
         Sys.print(' '*50+'description option b'                              , Sys.CLZ_HELP_ARG_INFO)
 
 
-    @staticmethod
-    def print_usage(data, withoutHeader=False):
+
+    def print_usage(self, data, withoutHeader=False):
         """"""
         if not withoutHeader : AbstractCli.print_header()
 

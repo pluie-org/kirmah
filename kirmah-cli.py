@@ -36,6 +36,7 @@ def main():
         c = 0
         Cli('.'+Sys.sep)
     except Exception as e :
+        raise e
         Sys.pwarn((('main : ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
         c = 1
     return c

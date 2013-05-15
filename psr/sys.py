@@ -77,6 +77,7 @@ class Sys:
     g.GUI                      = False
     g.GUI_PRINT_STDOUT         = True
     g.MPEVENT                  = Event()
+    g.LOG_QUEUE                = None
 
 
     @staticmethod

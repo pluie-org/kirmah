@@ -46,7 +46,7 @@ class Cli(AbstractCli):
 
     def __init__(self, path, remote=False, rwargs=None, thread=None, loglvl=Const.LOG_DEFAULT):
         """"""
-        AbstractCli.__init__(self, conf)
+        AbstractCli.__init__(self, conf, self)
 
 
         Cli.HOME   = conf.DEFVAL_USER_PATH
@@ -84,21 +84,22 @@ class Cli(AbstractCli):
         Sys.g.GUI        = thread is not None
 
         init(conf.PRG_NAME, o.debug, remote, not o.no_color, loglvl)
-        
-        
-        if not a:
 
+
+        if not a:
             try :
-                if not o.help :
-                    Cli.error_cmd(('no command specified',))
+                if not o.help or not o.version:
+                    self.parser.error_cmd(('no command specified',), True)
                 else :
                     Sys.clear()
                     Cli.print_help()
             except :
-                Cli.error_cmd(('no command specified',))
+                if not o.version :
+                    self.parser.error_cmd(('no command specified',), True)
+                else :
+                    Cli.print_header()
 
         else:
-
             if a[0] == 'help':
                 Sys.clear()
                 Cli.print_help()
@@ -111,9 +112,9 @@ class Cli(AbstractCli):
                     app.onCommandKey()
                 else :
                     if not len(a)>1   :
-                        Cli.error_cmd((('an ',('inputFile',Sys.Clz.fgb3),' is required !'),))
+                        self.parser.error_cmd((('an ',('inputFile',Sys.Clz.fgb3),' is required !'),), True)
                     elif not Io.file_exists(a[1]):
-                        Cli.error_cmd((('the file ',(a[1], Sys.Clz.fgb3), ' doesn\'t exists !'),))
+                        self.parser.error_cmd((('the file ',(a[1], Sys.Clz.fgb3), ' doesn\'t exists !'),), True)
 
                     elif a[0]=='enc'  : app.onCommandEnc()
                     elif a[0]=='dec'  : app.onCommandDec()
@@ -125,9 +126,18 @@ class Cli(AbstractCli):
                         Sys.g.LOG_QUEUE.put(Sys.g.SIGNAL_STOP)
 
             else :
-                Cli.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),))
+                self.parser.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),))
 
         if not o.quiet : Sys.dprint()
+
+#~
+    #~ @staticmethod
+    #~ def error_cmd(data):
+        #~ """"""
+        #~ Cli.print_usage('')
+        #~ Sys.dprint()
+        #~ Sys.pwarn(data, True)
+        #~ Cli.exit(1)
 
 
     @staticmethod

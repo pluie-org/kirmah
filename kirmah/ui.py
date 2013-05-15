@@ -56,7 +56,7 @@ class Gui():
         threads_init()
         self.wname   = wname
         self.builder = Builder()
-        self.builder.add_from_file(conf.PRG_GLADE_PATH)        
+        self.builder.add_from_file(conf.PRG_GLADE_PATH)
         self.builder.connect_signals(self)
         self.win = self.get(wname)
         self.win.connect('destroy', self.onDeleteWindow)
@@ -222,7 +222,7 @@ class Gui():
                         self.textbuffer.insert_at_cursor(item[0])
                         ei = self.textbuffer.get_end_iter()
                         oi = self.textbuffer.get_iter_at_offset(offs)
-                        tagName = item[1]       
+                        tagName = item[1]
                         self.textbuffer.apply_tag(self.tags[tagName], oi, ei)
                     self.textbuffer.insert_at_cursor('\n')
                     self.scroll_end()
@@ -230,11 +230,11 @@ class Gui():
                     Sys.dprint('STOP')
                     thread.cancel()
         self.update_progress(progress)
-        
+
 
     @Log(Const.LOG_NEVER)
     def update_progress(self, progress, lvl=50):
-       if progress > 0 :
+        if progress > 0 :
             self.progressbar.set_text(str(progress))
             lp   = self.progressbar.get_fraction()
             diff = (progress/100.0 - lp)
@@ -243,6 +243,8 @@ class Gui():
                 if nf < progress/100.0 :
                     self.progressbar.set_fraction(nf)
             self.progressbar.set_fraction(progress/100.0)
+        else :
+            self.progressbar.set_fraction(self.progressbar.get_fraction()+0.01)
 
 
     @Log(Const.LOG_NEVER)
@@ -355,11 +357,11 @@ class CliThread(Thread, IdleObject):
     def stop(self):
         """"""
         if self.isAlive():
-            self.cancel()          
+            self.cancel()
             if current_thread() .getName()==self.getName():
                 try:
                     self.emit("interrupted")
-                    Sys.thread_exit()                    
+                    Sys.thread_exit()
                 except RuntimeError as e :
                     print(str(self.getName()) + ' COULD NOT BE TERMINATED')
                     raise e
