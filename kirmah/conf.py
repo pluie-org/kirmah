@@ -1,5 +1,5 @@
-#  !/usr/bin/env python
-#  -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+#-*- coding: utf-8 -*-
 #  kirmah/conf.py
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
@@ -33,7 +33,7 @@
 
 from getpass          import getuser as getUserLogin
 from os               import sep
-from os.path          import dirname, realpath
+from os.path          import dirname, realpath, isdir, join
 
 PRG_NAME            = 'Kirmah'
 PRG_PACKAGE         = PRG_NAME.lower()
@@ -45,18 +45,14 @@ PRG_COPY            = 'pluie.org'
 PRG_YEAR            = '2013'
 PRG_WEBSITE         = 'http://kirmah.sourceforge.net'
 PRG_LICENSE         = 'GNU GPL v3'
-PRG_RESOURCES_PATH  = '/usr/share/pixmaps/'+PRG_PACKAGE+'/'
-try:
-    with open(PRG_RESOURCES_PATH) as f:
-        pass
-except IOError as e:
-    PRG_RESOURCES_PATH = dirname(dirname(realpath(__file__)))+sep+'resources'+sep
-    pass
+PRG_RESOURCES_PATH  = '/usr/share/'+PRG_PACKAGE+sep
+if not isdir(PRG_RESOURCES_PATH):
+    PRG_RESOURCES_PATH = dirname(dirname(realpath(__file__)))+sep+'resources'+sep+PRG_PACKAGE+sep
 print(PRG_RESOURCES_PATH)
-PRG_GLADE_PATH      = PRG_RESOURCES_PATH+PRG_PACKAGE+sep+'glade'+sep+PRG_PACKAGE+'.glade'
-PRG_LICENSE_PATH    = PRG_RESOURCES_PATH+PRG_PACKAGE+'/LICENSE'
-PRG_LOGO_PATH       = PRG_RESOURCES_PATH+'pixmaps'+sep+PRG_PACKAGE+sep+PRG_PACKAGE+'.png'
-PRG_LOGO_ICON_PATH  = PRG_RESOURCES_PATH+'pixmaps'+sep+PRG_PACKAGE+sep+PRG_PACKAGE+'_ico.png'
+PRG_GLADE_PATH      = PRG_RESOURCES_PATH+'glade'+sep+PRG_PACKAGE+'.glade'
+PRG_LICENSE_PATH    = PRG_RESOURCES_PATH+'/LICENSE'
+PRG_LOGO_PATH       = join(PRG_RESOURCES_PATH,'..'+sep,'pixmaps'+sep,PRG_PACKAGE+sep,PRG_PACKAGE+'.png')
+PRG_LOGO_ICON_PATH  = join(PRG_RESOURCES_PATH,'..'+sep,'pixmaps'+sep,PRG_PACKAGE+sep,PRG_PACKAGE+'_ico.png')
 PRG_ABOUT_LOGO_SIZE = 160
 PRG_ABOUT_COPYRIGHT = '(c) '+PRG_AUTHOR+' - '+PRG_COPY+' '+PRG_YEAR
 PRG_ABOUT_COMMENTS  = ''.join(['Kirmah simply encrypt/decrypt files','\n', 'license ',PRG_LICENSE])

@@ -3,7 +3,7 @@
 Name=Kirmah
 Comment=Encryption with symmetric-key algorithm Kirmah
 Version=0.34
-Icon=kirmah
+Icon=/usr/share/pixmaps/kirmah/kirmah.png
 Exec=kirmah
 Terminal=false
 Type=Application

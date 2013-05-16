@@ -1,0 +1,23 @@
+# Maintainer  : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
+# Contributor :
+pkgname=kirmah
+pkgver=2.18
+pkgrel=1
+pkgdesc='Encryption with symmetric-key algorithm Kirmah. cli tool and gtk+ GUI front-end'
+arch=('any')
+url='https://sourceforge.net/projects/kirmah/'
+license=('GPL3')
+depends=('python3' 'python-gobject' 'gobject-introspection' 'pygtk' 'desktop-file-utils')
+install="${pkgname}.install"
+source=("http://download.pluie.org/packages/archlinux/${pkgname}-${pkgver}.tar.bz2")
+md5sums=('aa396a5dc79adfe8d2dfcb041d834dfa')
+
+build() {
+  cd "${srcdir}/${pkgname}"
+  python3 setup.py build
+}
+
+package() {
+  cd "${srcdir}/${pkgname}"
+  python3 setup.py install --root="${pkgdir}" --prefix=/usr --optimize=1
+}

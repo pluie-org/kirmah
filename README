@@ -3,15 +3,14 @@ Kirmah 2.18 (2013-05-15)
 
 Install on Archlinux
 -------------------------
-sudo pacman -U http://sourceforge.net/projects/kirmah/files/packages/archlinux/kirmah-2.18-1-any.pkg.tar.xz/download
-
+sudo pacman -U http://sourceforge.net/projects/kirmah/files/kirmah-2.18/packages/archlinux/kirmah-2.18-1-any.pkg.tar.xz/download
 
 (re)build instruction
 -------------------------
 mkdir /tmp/kirmah; cd /tmp/kirmah;
-wget http://sourceforge.net/projects/kirmah/files/packages/archlinux/PKGBUILD/download
+wget http://sourceforge.net/projects/kirmah/files/kirmah-2.18/packages/archlinux/PKGBUILD/download
 mv download PKGBUILD
-wget http://sourceforge.net/projects/kirmah/files/packages/archlinux/kirmah.install/download
+wget http://sourceforge.net/projects/kirmah/files/kirmah-2.18/packages/archlinux/kirmah.install/download
 mv download kirmah.install
 makepkg -s;
 
@@ -24,4 +23,4 @@ simply untar archive, then launch :
 $ python ./kirmah/kirmah.py
 $ python ./kirmah/kirmah-cli.py
 
-you can also use python2 disutils and setup.py
+you can also use python disutils and setup.py

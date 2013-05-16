@@ -1,5 +1,5 @@
-#  !/usr/bin/env python
-#  -*- coding: utf-8 -*-
+#!/usr/bin/env python3
+#-*- coding: utf-8 -*-
 #  setup.py
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
@@ -28,7 +28,7 @@
 #  along with Kirmah.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from psr.kirmah         import conf
+from kirmah             import conf
 from distutils.core     import setup
 import glob
 import os
@@ -43,8 +43,8 @@ for filepath in glob.glob('resources/locale/*/LC_MESSAGES/*.mo'):
 
 setup(name      = conf.PRG_NAME,
       version   = conf.PRG_VERS,
-      packages  = [conf.PRG_PACKAGE],
-      scripts   = [conf.PRG_SCRIPT, conf.PRG_CLI_NAME],
+      packages  = [conf.PRG_PACKAGE, 'psr'],
+      scripts   = ['scripts/'+conf.PRG_SCRIPT, 'scripts/'+conf.PRG_CLI_NAME],
       data_files= [('/usr/share/pixmaps/'+conf.PRG_PACKAGE    , glob.glob('resources/pixmaps/'+conf.PRG_PACKAGE+'/*.png')),
                    ('/usr/share/applications'                 , ['resources/'+conf.PRG_PACKAGE+'.desktop']),
                    ('/usr/share/'+conf.PRG_PACKAGE            , glob.glob('resources/'+conf.PRG_PACKAGE+'/LICENSE')),
