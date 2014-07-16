@@ -13,8 +13,10 @@ class IniFile:
     def __init__(self, path):
         """"""
         self.path = path
-        self.dic  = {}
+        self.dic  = {'main':{}}
         self.read()
+        if not 'main' in self.dic :
+            self.dic['main'] = {}
 
 
     @Log(Const.LOG_DEBUG)
@@ -41,6 +43,10 @@ class IniFile:
     def get(self, key, section='main'):
         """"""
         return self.dic[section][key]
+        #if section in self.dic :
+        #    return self.dic[section][key]
+        #else :
+        #    return ''
 
 
     @Log(Const.LOG_DEBUG)
@@ -78,7 +84,7 @@ class IniFile:
         """"""
         data = {}
         for s in self.dic :
-            if s.startswith(section, 0) : data[s[len(section)+1:]] = self.dic[s]
+            if s.startswith(section, 0) : data[s[len(section)+1:]] = self.dic[s].copy()
         return data
 
 
@@ -129,20 +135,20 @@ class IniFile:
         if sectionName!='main':
             Sys.dprint()
             if not withoutSectionName :
-                Sys.print('['+sectionName+']', Sys.Clz.fgB3)
+                Sys.echo('['+sectionName+']', Sys.Clz.fgB3)
             else:
-                Sys.print('['+sectionName.split('.')[1]+']', Sys.Clz.fgB3)
+                Sys.echo('['+sectionName.split('.')[1]+']', Sys.Clz.fgB3)
         if sectionName in self.dic :
             for k in sorted(self.dic[sectionName]):
                 k = k.rstrip(' ')
                 a = ''
-                Sys.print(k.ljust(10,' ')+' = '       , Sys.Clz.fgn7, False)
+                Sys.echo(k.ljust(10,' ')+' = '       , Sys.Clz.fgn7, False)
                 if self.dic[sectionName][k] is not None :
                     if len(self.dic[sectionName][k]) > 98: a = '…'
                     if Sys.isUnix() or k is not 'key' :
-                        Sys.print(self.dic[sectionName][k][:98]+a, Sys.Clz.fgN2)
+                        Sys.echo(self.dic[sectionName][k][:98]+a, Sys.Clz.fgN2)
                     else:
-                        Sys.print('key is masked', Sys.Clz.fgb1)
+                        Sys.echo('key is masked', Sys.Clz.fgb1)
 
     @Log()
     def read(self):

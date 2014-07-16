@@ -65,6 +65,17 @@ class Const:
     CLZ_KO                = 'ko'
     CLZ_TASK              = 'task'
     CLZ_SYMBOL            = 'symbol'
+    CLZ_ACTION            = 'action'
+    CLZ_INIT              = 'init'
+    
+    CLZ_0                 = 'color0'
+    CLZ_1                 = 'color1'
+    CLZ_2                 = 'color2'
+    CLZ_3                 = 'color3'
+    CLZ_4                 = 'color4'
+    CLZ_5                 = 'color5'
+    CLZ_6                 = 'color6'
+    CLZ_7                 = 'color7'
 
     CLZ_HEAD_APP          = 'headapp'
     CLZ_HEAD_SEP          = 'headsep'
@@ -89,6 +100,6 @@ class Const:
     UNIT_SHORT_TIB        = 'TiB'
 
     LINE_SEP_LEN          = 100
-    LINE_SEP_CHAR         = '―'
+    LINE_SEP_CHAR         = '-'
 
 const = Const()

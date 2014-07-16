@@ -45,7 +45,7 @@ from psr.log                    import Log
 class KirmahApp:
 
     @Log(Const.LOG_BUILD)
-    def __init__(self, debug=True, color=True, loglvl=Const.LOG_DEFAULT):
+    def __init__(self, debug=False, color=True, loglvl=Const.LOG_NEVER):
         """"""
         self.encmode         = conf.DEFVAL_ENCMODE
         self.splitmode       = False
@@ -71,10 +71,15 @@ class KirmahApp:
         """"""
         kpath = self.getDefaultKeyPath()
         if not Io.file_exists(kpath):
-            if Sys.isUnix() :
+            #if Sys.isUnix() :
                 if not Sys.isdir(conf.DEFVAL_UKEY_PATH) :
                     Sys.mkdir_p(conf.DEFVAL_UKEY_PATH)
-                    Io.set_data(kpath, KeyGen(conf.DEFVAL_UKEY_LENGHT).key)
+                k = KeyGen(conf.DEFVAL_UKEY_LENGHT)
+                print(k)
+                content = k.key
+                print('content')
+                Io.set_data(kpath, content)
+                print('set content')
         self.selectKey(kpath)
 
 
@@ -89,11 +94,15 @@ class KirmahApp:
     @Log(Const.LOG_DEBUG)
     def getKeyInfos(self, filename=None):
         """"""
-        if filename is None : filename = self.getDefaultKeyPath()
+        if filename is None : filename = self.getDefaultKeyPath()        
         if not Io.file_exists(filename):
             raise FileNotFoundException(filename)
+        print(filename)
+        print('toto2')
         k = Io.get_data(filename)
+        print('get data2')
         s = len(k)
+        # print(s)
         m = KeyGen(s).getMark(k)
         return k, s, m
 
@@ -101,6 +110,8 @@ class KirmahApp:
     @Log(Const.LOG_DEBUG)
     def selectKey(self, filename):
         """"""
+        print('selectKey : ')
+        print(filename)
         if not Io.file_exists(filename):
             raise FileNotFoundException(filename)
         self.kpath = filename
@@ -189,7 +200,7 @@ class KirmahApp:
         key    = '-k'+q+self.kpath+q if self.kpath != self.getDefaultKeyPath() else ''
         #~ q      = '"'
         call   = ['kirmah-cli.py',debug, action,q+self.src+q,comp,mproc,rmode,mmode,'-o',q+self.dst+q,key]
-        print('python '+(' '.join(call)))
+        print('python3 '+(' '.join(call)))
         return call
 
 

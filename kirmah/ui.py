@@ -110,6 +110,10 @@ class Gui():
         finally:
             main_quit(*args)
 
+    @Log()
+    def beforeDelete(self):
+        """"""
+
 
     @Log(Const.LOG_UI)
     def list_threads(self):
@@ -216,6 +220,7 @@ class Gui():
             data = Sys.g.LOG_QUEUE.get()
             if data is not None :
                 if data is not Sys.g.SIGNAL_STOP :
+                    cth, data = data
                     for item in data :
                         ei   = self.textbuffer.get_end_iter()
                         offs = ei.get_offset()

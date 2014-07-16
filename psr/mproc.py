@@ -141,7 +141,7 @@ class Manager:
                         if Sys.g.DEBUG :
                             if not Sys.g.GUI :
                                 for item in msg[self.K_DATA] :
-                                    Sys.print(item[0], Sys.clzdic[item[1]], False, True)
+                                    Sys.echo(item[0], Sys.clzdic[item[1]], False, True)
                                 Sys.dprint('')
                             #~ else :
                             Sys.wlog(msg[self.K_DATA])

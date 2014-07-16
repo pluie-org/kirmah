@@ -102,8 +102,10 @@ DEFVAL_ENCMODE      = True
 DEFVAL_MIXMODE      = True
 DEFVAL_RANDOMMODE   = True
 DEFVAL_USER_PATH    = ''.join([sep,'home',sep,getUserLogin(),sep])
+#~ DEFVAL_USER_PATH    = ''.join(['C:',sep,sep,'dev',sep,sep,getUserLogin(),sep,sep])
 DEFVAL_UKEY_PATH    = ''.join([DEFVAL_USER_PATH, '.', PRG_PACKAGE,sep])
-DEFVAL_UKEY_NAME    = '.default.key'
+#~ DEFVAL_UKEY_PATH    = ''.join([DEFVAL_USER_PATH, PRG_PACKAGE,sep,sep])
+DEFVAL_UKEY_NAME    = 'default.key'
 DEFVAL_UKEY_LENGHT  = 1024
 DEFVAL_CRYPT_EXT    = '.kmh'
 

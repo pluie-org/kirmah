@@ -86,7 +86,11 @@ class AppGui(Gui):
         key, size, mark = self.app.getKeyInfos()
 
         self.curKey = self.DEFAULT_KEY
+        print('-'*15)
+        v = self.app.getDefaultKeyPath()
+        print(v)
         self.get('filechooserbutton1').set_filename(self.app.getDefaultKeyPath())
+        print(conf.DEFVAL_USER_PATH)
         self.get('filechooserbutton3').set_current_folder(conf.DEFVAL_USER_PATH)
         devPath = '/home/dev/git_repos/kirmah2.15/'
         #~ self.get('filechooserbutton3').set_current_folder(devPath)
@@ -222,7 +226,7 @@ class AppGui(Gui):
         if self.start: self.refreshProceed()
 
 
-    @Log(Const.LOG_UI)
+    @Log(Const.LOG_NEVER)
     def on_switch_mode(self, s, data):
         """"""
         self.app.switchEncMode(not s.get_active())
@@ -233,7 +237,7 @@ class AppGui(Gui):
         if self.start: self.refreshProceed()
 
 
-    @Log(Const.LOG_UI)
+    @Log(Const.LOG_NEVER)
     def on_switch_format(self, s, data):
         """"""
         self.app.switchFormatMode(not s.get_active())

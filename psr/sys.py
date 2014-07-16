@@ -33,11 +33,11 @@
 
 from psr.io             import Io
 from psr.const          import Const
-from threading          import RLock
+from threading          import RLock, current_thread
 from multiprocessing    import Event
 from queue              import Queue
 
-def init(name, debug, remote=False, color=True, loglvl=Const.LOG_DEFAULT):
+def init(name, debug, remote=False, color=True, loglvl=Const.LOG_NEVER):
     Sys.g_init(name, debug, remote, color, loglvl)
     Sys.g_set_main_proc(remote)
 
@@ -52,7 +52,7 @@ class Sys:
     from getpass    import getuser as getUserLogin
     from time       import strftime, mktime, time, localtime, sleep
     from datetime   import datetime, timedelta
-    from sys        import exit
+    from sys        import exit, stdout, executable
     from os.path    import abspath, dirname, join, realpath, basename, getsize, isdir, splitext
     from math       import log, floor, ceil
     from _thread    import exit as thread_exit
@@ -74,6 +74,7 @@ class Sys:
     g.SIGNAL_STOP              = 0
     g.SIGNAL_START             = 1
     g.SIGNAL_RUN               = 2
+    g.SIGNAL_CLEAR             = 3
     g.GUI                      = False
     g.GUI_PRINT_STDOUT         = True
     g.MPEVENT                  = Event()
@@ -229,7 +230,7 @@ class Sys:
         if not Sys.is_cli_cancel():
             if Sys.g.LOG_QUEUE is not None :
                 try :
-                    Sys.g.LOG_QUEUE.put(data)
+                    Sys.g.LOG_QUEUE.put((current_thread().name,data))
                     Sys.cli_emit_progress()
                 except Exception as e:
                     Sys.pwarn((('wlog exception ',(str(e),Sys.CLZ_ERROR_PARAM), ' !'),), True)
@@ -239,7 +240,24 @@ class Sys:
 
 
     @staticmethod
-    def print(data, colors, endLF=True, endClz=True):
+    def pwlog(data, guiClear=False):
+        """ data=[('text', keycolor, newline)]"""
+        if guiClear : Sys.wlog(Sys.g.SIGNAL_CLEAR)
+        wd = []
+        for item in data :
+            nl = False if len(item)< 3 else (item[2]==1 or item[2]==True)
+            c  = Const.CLZ_0 if (len(item)< 2 or item[1] not in Sys.clzdic) else item[1]
+            Sys.echo(item[0], Sys.clzdic[c], nl)
+            wd += [(item[0], c)]
+            if nl and Sys.g.GUI :
+                Sys.wlog(wd)
+                wd = []
+        if len(wd) > 0 and Sys.g.GUI :
+            Sys.wlog(wd)
+
+
+    @staticmethod
+    def echo(data, colors, endLF=True, endClz=True):
         """"""
         if isinstance(data,bytes) :
             data = Sys.getPrintableBytes(data)
@@ -256,7 +274,7 @@ class Sys:
         else :
             if Sys.g.COLOR_MODE : Sys.Clz.setColor(eval('Sys.Clz._w'+'|Sys.Clz._w'.join(tokens)))
             Sys.dprint(data,end=ev, dbcall=False)
-            stdout.flush()
+            Sys.stdout.flush()
             if endClz and Sys.g.COLOR_MODE : Sys.Clz.setColor(Sys.Clz._wOFF)
 
 
@@ -268,7 +286,8 @@ class Sys:
             if not Sys.g.GUI or Sys.g.GUI_PRINT_STDOUT :
                 if Sys.g.RLOCK is not None :
                     with Sys.g.RLOCK :
-                        if not Sys.g.QUIET : print(d,end=end)
+                        if not Sys.g.QUIET :
+                            print(d,end=end)
                 else :
                     if not Sys.g.QUIET :
                         print(d,end=end)
@@ -281,8 +300,8 @@ class Sys:
     def eprint(d='', label=Const.WARN, dbcall=False):
         """"""
         c = Sys.CLZ_ERROR if label is Const.ERROR else Sys.CLZ_WARN
-        Sys.print(' '+label+' : ', c, False, False)
-        Sys.print(str(d)+' ', c, True, True)
+        Sys.echo(' '+label+' : ', c, False, False)
+        Sys.echo(str(d)+' ', c, True, True)
 
         bdata = [(label+' : ' , label),(str(d)+' ', label)]
         return bdata
@@ -293,8 +312,8 @@ class Sys:
         """"""
         t, s = Sys.strftime('%H:%M',t), Sys.strftime(':%S ',t)
         if not dbcall :
-            Sys.print(t , Sys.CLZ_TIME, False)
-            Sys.print(s , Sys.CLZ_SEC , False)
+            Sys.echo(t , Sys.CLZ_TIME, False)
+            Sys.echo(s , Sys.CLZ_SEC , False)
 
         bdata = [(t , Const.CLZ_TIME),(s , Const.CLZ_SEC)]
         return bdata
@@ -305,8 +324,8 @@ class Sys:
         """"""
         l, v = label.rjust(pad,' '), ' '+str(value)
         if not dbcall :
-            Sys.print(l, Sys.CLZ_SEC  , False)
-            Sys.print(v, Sys.CLZ_TIME , True)
+            Sys.echo(l, Sys.CLZ_SEC  , False)
+            Sys.echo(v, Sys.CLZ_TIME , True)
 
         bdata = [(l, Const.CLZ_SEC),(v, Const.CLZ_TIME)]
         return bdata
@@ -320,10 +339,10 @@ class Sys:
     @staticmethod
     def pdelta(t, label='', dbcall= False):
         """"""
-        if len(label)>0 and not dbcall : Sys.print(label+' ', Sys.CLZ_IO, False)
+        if len(label)>0 and not dbcall : Sys.echo(label+' ', Sys.CLZ_IO, False)
         v = Sys.getDelta(t)
         if not dbcall :
-            Sys.print(v, Sys.CLZ_DELTA)
+            Sys.echo(v, Sys.CLZ_DELTA)
 
         bdata = []
         if len(label)>0 :
@@ -335,7 +354,7 @@ class Sys:
     @staticmethod
     def pcontent(content, color=None, bcolor=Const.CLZ_DEFAULT, dbcall= False):
         """"""
-        if not dbcall : Sys.print(content, Sys.CLZ_SEC if color is None else color)
+        if not dbcall : Sys.echo(content, Sys.CLZ_SEC if color is None else color)
 
         bdata = [(content, bcolor)]
         return bdata
@@ -359,18 +378,18 @@ class Sys:
         uiclz  = Const.CLZ_WARN if not isError else Const.CLZ_ERROR
         uiclzp = Const.CLZ_WARN_PARAM if not isError else Const.CLZ_ERROR_PARAM
 
-        if not dbcall : Sys.print(w, clzp, False, False)
+        if not dbcall : Sys.echo(w, clzp, False, False)
         bdata  = []
         if not Sys.g.QUIET :
             bdata.append((w, uiclzp))
         for i, line in enumerate(data) :
             if i > 0 :
-                if not dbcall : Sys.print(' '*len(w), clz, False, False)
+                if not dbcall : Sys.echo(' '*len(w), clz, False, False)
                 if not Sys.g.QUIET :
                     bdata.append((' '*len(w), uiclz))
             if isinstance(line,str) :
                 s = line.ljust(length-len(w),' ')
-                if not dbcall : Sys.print(s, clz, True, True)
+                if not dbcall : Sys.echo(s, clz, True, True)
 
                 if not Sys.g.QUIET :
                     bdata.append((s, uiclz))
@@ -380,15 +399,15 @@ class Sys:
                 sl = 0
                 for p in line :
                     if isinstance(p,str) :
-                        Sys.print(p, clz, False, False)
+                        Sys.echo(p, clz, False, False)
                         bdata.append((p, uiclz))
                         sl += len(p)
                     else :
-                        Sys.print(p[0], clzp+p[1], False, False)
+                        Sys.echo(p[0], clzp+p[1], False, False)
                         bdata.append((p[0], uiclzp))
                         sl += len(p[0])
                 s = ' '.ljust(length-sl-len(w),' ')
-                if not dbcall : Sys.print(s, clz, True, True)
+                if not dbcall : Sys.echo(s, clz, True, True)
                 if not Sys.g.QUIET :
                     bdata.append((s, uiclz))
                     Sys.wlog(bdata)
@@ -401,9 +420,9 @@ class Sys:
     @staticmethod
     def _psymbol(ch, done=True):
         """"""
-        Sys.print(' ', Sys.CLZ_DEFAULT, False, False)
-        Sys.print(' '+ch+' ',  Sys.CLZ_HEAD_APP if done else Sys.CLZ_SYMBOL, False, True)
-        Sys.print(' ', Sys.CLZ_DEFAULT, False, True)
+        Sys.echo(' ', Sys.CLZ_DEFAULT, False, False)
+        Sys.echo(' '+ch+' ',  Sys.CLZ_HEAD_APP if done else Sys.CLZ_SYMBOL, False, True)
+        Sys.echo(' ', Sys.CLZ_DEFAULT, False, True)
         bdata = [(' ', Const.CLZ_DEFAULT),(' '+ch+' ', Const.CLZ_HEAD_APP if done else Sys.CLZ_SYMBOL),(' ', Const.CLZ_DEFAULT)]
         return bdata
 
@@ -412,7 +431,7 @@ class Sys:
     def pask(ask, yesValue='yes', noValue='no'):
         """"""
         Sys._psymbol('?')
-        Sys.print('', Sys.Clz.fgb3, False, False)
+        Sys.echo('', Sys.Clz.fgb3, False, False)
         ask    = ask + ' ('+yesValue+'/'+noValue+') ? '
         answer = input(ask)
         while answer.lower()!=yesValue.lower() and answer.lower()!=noValue.lower() :
@@ -428,13 +447,13 @@ class Sys:
         if stime is not None :
             v = ' ('+''.join(['{:.5f}'.format(Sys.time()-(Sys.mktime(stime.timetuple())+1e-6*stime.microsecond)),' s'])+')'
         else : v = ''
-        bdata = Sys._psymbol('¤')
-        Sys.print(title, Sys.CLZ_TITLE, False, False)
-        Sys.print(v+' '.ljust(length-len(title)-20-len(v), ' '),Sys.CLZ_DELTA, False, True)
+        bdata = Sys._psymbol('*')
+        Sys.echo(title, Sys.CLZ_TITLE, False, False)
+        Sys.echo(v+' '.ljust(length-len(title)-20-len(v), ' '),Sys.CLZ_DELTA, False, True)
         if done :
-            Sys.print(' ==  '+Const.OK+'  == ', Sys.CLZ_OK)
+            Sys.echo(' ==  '+Const.OK+'  == ', Sys.CLZ_OK)
         else :
-            Sys.print(' ==  '+Const.KO+'  == ', Sys.CLZ_KO)
+            Sys.echo(' ==  '+Const.KO+'  == ', Sys.CLZ_KO)
 
         bdata = bdata + [(title, Const.CLZ_TITLE),(v+' '.ljust(length-len(title)-20-len(v)), Const.CLZ_DELTA),(' ==  '+(Const.OK if done else Const.KO)+'  == ', (Const.CLZ_OK if done else Const.CLZ_KO))]
 
@@ -450,7 +469,7 @@ class Sys:
     def ptask(title='Processing, please wait'):
         if not Sys.g.QUIET :
             s = ' '+title+'...'
-            Sys.print(s, Sys.CLZ_TASK )
+            Sys.echo(s, Sys.CLZ_TASK )
             Sys.wlog([(s, Const.CLZ_TASK)])
             Sys.wlog(Sys.dprint())
 
@@ -514,22 +533,22 @@ class Coloriz:
         for i in range(0,8):
             # foreground normal
             exec('self.fgn%i = self._MARKER + self._MARKER[0] + "n%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._un%i = "\\033[0;3%im"' % (i,i))
+            if Sys.isUnix() : exec('self._un%i = "\\033[0;3%im"' % (i,i))
             # foreground bold
             exec('self.fgb%i = self._MARKER + self._MARKER[0] + "f%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._uf%i = "\\033[1;3%im"' % (i,i))
+            if Sys.isUnix() : exec('self._uf%i = "\\033[1;3%im"' % (i,i))
             # foreground high intensity
             exec('self.fgN%i = self._MARKER + self._MARKER[0] + "N%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._uN%i = "\\033[0;9%im"' % (i,i))
+            if Sys.isUnix() : exec('self._uN%i = "\\033[0;9%im"' % (i,i))
             # foreground bold high intensity
             exec('self.fgB%i = self._MARKER + self._MARKER[0] + "F%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._uF%i = "\\033[1;9%im"' % (i,i))
+            if Sys.isUnix() : exec('self._uF%i = "\\033[1;9%im"' % (i,i))
             # background
             exec('self.bg%i = self._MARKER + self._MARKER[0] + "b%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._ub%i = "\\033[4%im"' % (i,i))
+            if Sys.isUnix() : exec('self._ub%i = "\\033[4%im"' % (i,i))
             # background high intensity
             exec('self.BG%i = self._MARKER + self._MARKER[0] + "B%i" + self._SEP + self._MARKER' % (i,i))
-            if True or Sys.isUnix() : exec('self._uB%i = "\\033[0;10%im"' % (i,i))
+            if Sys.isUnix() : exec('self._uB%i = "\\033[0;10%im"' % (i,i))
 
 Sys.Clz                  = Coloriz()
 Sys.CLZ_TIME             = Sys.Clz.fgN2+Sys.Clz.bg0
@@ -552,6 +571,8 @@ Sys.CLZ_TITLE            = Sys.Clz.fgB7+Sys.Clz.bg0
 Sys.CLZ_SYMBOL           = Sys.Clz.BG4+Sys.Clz.fgB7
 Sys.CLZ_OK               = Sys.Clz.bg2+Sys.Clz.fgb7
 Sys.CLZ_KO               = Sys.Clz.bg1+Sys.Clz.fgb7
+Sys.CLZ_ACTION           = Sys.Clz.BG4+Sys.Clz.fgB7
+Sys.CLZ_INIT             = Sys.Clz.BG4+Sys.Clz.fgB7
 Sys.CLZ_HELP_PRG         = Sys.Clz.fgb7
 Sys.CLZ_HELP_CMD         = Sys.Clz.fgB3
 Sys.CLZ_HELP_PARAM       = Sys.Clz.fgB1
@@ -565,4 +586,25 @@ Sys.CLZ_HEAD_VAL         = Sys.Clz.fgB4
 Sys.CLZ_HEAD_SEP         = Sys.Clz.fgB0
 Sys.CLZ_HEAD_LINE        = Sys.Clz.fgN0
 
-Sys.clzdic               = { Const.CLZ_TASK : Sys.CLZ_TASK, Const.CLZ_SYMBOL: Sys.CLZ_SYMBOL, Const.CLZ_TIME : Sys.CLZ_TIME, Const.CLZ_SEC : Sys.CLZ_SEC, Const.CLZ_IO : Sys.CLZ_IO, Const.CLZ_CPID : Sys.CLZ_CPID, Const.CLZ_PID : Sys.CLZ_PID, Const.CLZ_CFUNC : Sys.CLZ_CFUNC, Const.CLZ_FUNC : Sys.CLZ_FUNC, Const.CLZ_ARGS : Sys.CLZ_ARGS, Const.CLZ_DELTA : Sys.CLZ_DELTA, Const.CLZ_ERROR : Sys.CLZ_ERROR, Const.CLZ_WARN : Sys.CLZ_WARN, Const.CLZ_ERROR_PARAM : Sys.CLZ_ERROR_PARAM, Const.CLZ_WARN_PARAM : Sys.CLZ_WARN_PARAM, Const.CLZ_DEFAULT : Sys.CLZ_DEFAULT }
+Sys.CLZ_0                = Sys.Clz.fgn7
+Sys.CLZ_1                = Sys.Clz.fgB1
+Sys.CLZ_2                = Sys.Clz.fgB2
+Sys.CLZ_3                = Sys.Clz.fgB3
+Sys.CLZ_4                = Sys.Clz.fgB4
+Sys.CLZ_5                = Sys.Clz.fgB5
+Sys.CLZ_6                = Sys.Clz.fgB6
+Sys.CLZ_7                = Sys.Clz.fgB7
+
+Sys.clzdic               = { Const.CLZ_0       : Sys.CLZ_0      , Const.CLZ_1     : Sys.CLZ_1     , Const.CLZ_2           : Sys.CLZ_2, 
+                             Const.CLZ_3       : Sys.CLZ_3      , Const.CLZ_4     : Sys.CLZ_4     , Const.CLZ_5           : Sys.CLZ_5,
+                             Const.CLZ_6       : Sys.CLZ_6      , Const.CLZ_7     : Sys.CLZ_7     ,
+                             Const.CLZ_TASK    : Sys.CLZ_TASK   , Const.CLZ_SYMBOL: Sys.CLZ_SYMBOL, 
+                             Const.CLZ_TIME    : Sys.CLZ_TIME   , Const.CLZ_SEC   : Sys.CLZ_SEC   , 
+                             Const.CLZ_IO      : Sys.CLZ_IO     , Const.CLZ_CPID  : Sys.CLZ_CPID  , Const.CLZ_PID         : Sys.CLZ_PID, 
+                             Const.CLZ_CFUNC   : Sys.CLZ_CFUNC  , Const.CLZ_FUNC  : Sys.CLZ_FUNC  , Const.CLZ_ARGS        : Sys.CLZ_ARGS, 
+                             Const.CLZ_DELTA   : Sys.CLZ_DELTA  , 
+                             Const.CLZ_ERROR   : Sys.CLZ_ERROR  , Const.CLZ_WARN  : Sys.CLZ_WARN  , Const.CLZ_ERROR_PARAM : Sys.CLZ_ERROR_PARAM, Const.CLZ_WARN_PARAM : Sys.CLZ_WARN_PARAM, 
+                             Const.CLZ_DEFAULT : Sys.CLZ_DEFAULT,
+                             Const.CLZ_ACTION  : Sys.CLZ_ACTION ,
+                             Const.CLZ_INIT    : Sys.CLZ_INIT
+                           }

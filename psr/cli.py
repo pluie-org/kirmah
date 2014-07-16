@@ -123,7 +123,7 @@ class AbstractCli():
         d = AbstractCli.printHeaderPart('author'   ,AbstractCli.conf.PRG_AUTHOR)
         e = AbstractCli.printHeaderPart('license'  ,AbstractCli.conf.PRG_LICENSE)
         f = AbstractCli.printHeaderPart('copyright',AbstractCli.conf.PRG_COPY)
-        Sys.print(' ', Sys.Clz.OFF)
+        Sys.echo(' ', Sys.Clz.OFF)
         AbstractCli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
         Sys.wlog(a)
         Sys.wlog(b + c + d + e + f )
@@ -135,7 +135,7 @@ class AbstractCli():
     def printLineSep(sep,lenSep):
         """"""
         s = sep*lenSep
-        Sys.print(s, Sys.CLZ_HEAD_LINE)
+        Sys.echo(s, Sys.CLZ_HEAD_LINE)
         return [(s, Const.CLZ_HEAD_SEP)]
 
 
@@ -143,7 +143,7 @@ class AbstractCli():
     def printHeaderTitle(title):
         """"""
         s = ' == '+title+' == '
-        Sys.print(s, Sys.CLZ_HEAD_APP, False, True)
+        Sys.echo(s, Sys.CLZ_HEAD_APP, False, True)
         return [(s, Const.CLZ_HEAD_APP)]
 
 
@@ -151,11 +151,11 @@ class AbstractCli():
     def printHeaderPart(label,value):
         """"""
         a, b, c = ' [',':' ,'] '
-        Sys.print(a    , Sys.CLZ_HEAD_SEP, False)
-        Sys.print(label, Sys.CLZ_HEAD_KEY, False)
-        Sys.print(b    , Sys.CLZ_HEAD_SEP, False)
-        Sys.print(value, Sys.CLZ_HEAD_VAL, False)
-        Sys.print(c    , Sys.CLZ_HEAD_SEP, False)
+        Sys.echo(a    , Sys.CLZ_HEAD_SEP, False)
+        Sys.echo(label, Sys.CLZ_HEAD_KEY, False)
+        Sys.echo(b    , Sys.CLZ_HEAD_SEP, False)
+        Sys.echo(value, Sys.CLZ_HEAD_VAL, False)
+        Sys.echo(c    , Sys.CLZ_HEAD_SEP, False)
         return [(a,Const.CLZ_HEAD_SEP),(label,Const.CLZ_HEAD_KEY),(b,Const.CLZ_HEAD_SEP),(value,Const.CLZ_HEAD_VAL),(c,Const.CLZ_HEAD_SEP)]
 
 
@@ -171,30 +171,30 @@ class AbstractCli():
         Sys.dprint('\n')
         AbstractCli.printLineSep(Const.LINE_SEP_CHAR,Const.LINE_SEP_LEN)
 
-        Sys.print('  MAIN OPTIONS :\n'                                       , Sys.CLZ_HELP_CMD)
-        Sys.print(' '*4+'-v'.ljust(13,' ')+', --version'                     , Sys.CLZ_HELP_ARG)
-        Sys.print(' '*50+'display programm version'                          , Sys.CLZ_HELP_ARG_INFO)
-        Sys.print(' '*4+'-d'.ljust(13,' ')+', --debug'                       , Sys.CLZ_HELP_ARG)
-        Sys.print(' '*50+'enable debug mode'                                 , Sys.CLZ_HELP_ARG_INFO)
-        Sys.print(' '*4+'-f'.ljust(13,' ')+', --force'                       , Sys.CLZ_HELP_ARG)
-        Sys.print(' '*50+'force rewriting existing files without alert'      , Sys.CLZ_HELP_ARG_INFO)
-        Sys.print(' '*4+'-q'.ljust(13,' ')+', --quiet'                       , Sys.CLZ_HELP_ARG)
-        Sys.print(' '*50+'don\'t print status messages to stdout'            , Sys.CLZ_HELP_ARG_INFO)
-        Sys.print(' '*4+'-h'.ljust(13,' ')+', --help'                        , Sys.CLZ_HELP_ARG)
-        Sys.print(' '*50+'display help'                                      , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo('  MAIN OPTIONS :\n'                                       , Sys.CLZ_HELP_CMD)
+        Sys.echo(' '*4+'-v'.ljust(13,' ')+', --version'                     , Sys.CLZ_HELP_ARG)
+        Sys.echo(' '*50+'display programm version'                          , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo(' '*4+'-d'.ljust(13,' ')+', --debug'                       , Sys.CLZ_HELP_ARG)
+        Sys.echo(' '*50+'enable debug mode'                                 , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo(' '*4+'-f'.ljust(13,' ')+', --force'                       , Sys.CLZ_HELP_ARG)
+        Sys.echo(' '*50+'force rewriting existing files without alert'      , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo(' '*4+'-q'.ljust(13,' ')+', --quiet'                       , Sys.CLZ_HELP_ARG)
+        Sys.echo(' '*50+'don\'t print status messages to stdout'            , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo(' '*4+'-h'.ljust(13,' ')+', --help'                        , Sys.CLZ_HELP_ARG)
+        Sys.echo(' '*50+'display help'                                      , Sys.CLZ_HELP_ARG_INFO)
 
         Sys.dprint('\n')
-        Sys.print('  KEY OPTIONS :\n'                                        , Sys.CLZ_HELP_CMD)
-        Sys.print(' '*4+'-a '                                                , Sys.CLZ_HELP_ARG, False)
-        Sys.print('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print(', --bind_opt_a'.ljust(18,' ')                             , Sys.CLZ_HELP_ARG, False)
-        Sys.print('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM)
-        Sys.print(' '*50+'description option a'                              , Sys.CLZ_HELP_ARG_INFO)
-        Sys.print(' '*4+'-b '                                                , Sys.CLZ_HELP_ARG, False)
-        Sys.print('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print(', --bind_opt_b'.ljust(18,' ')                             , Sys.CLZ_HELP_ARG, False)
-        Sys.print('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM)
-        Sys.print(' '*50+'description option b'                              , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo('  KEY OPTIONS :\n'                                        , Sys.CLZ_HELP_CMD)
+        Sys.echo(' '*4+'-a '                                                , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo(', --bind_opt_a'.ljust(18,' ')                             , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM)
+        Sys.echo(' '*50+'description option a'                              , Sys.CLZ_HELP_ARG_INFO)
+        Sys.echo(' '*4+'-b '                                                , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo(', --bind_opt_b'.ljust(18,' ')                             , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('VALUE'.ljust(10,' ')                                      , Sys.CLZ_HELP_PARAM)
+        Sys.echo(' '*50+'description option b'                              , Sys.CLZ_HELP_ARG_INFO)
 
 
 
@@ -202,21 +202,21 @@ class AbstractCli():
         """"""
         if not withoutHeader : AbstractCli.print_header()
 
-        Sys.print('  USAGE :\n'                            , Sys.CLZ_HELP_CMD)
-        Sys.print('    '+AbstractCli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
-        Sys.print('help '                                  , Sys.CLZ_HELP_CMD)
+        Sys.echo('  USAGE :\n'                            , Sys.CLZ_HELP_CMD)
+        Sys.echo('    '+AbstractCli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
+        Sys.echo('help '                                  , Sys.CLZ_HELP_CMD)
 
-        Sys.print('    '+AbstractCli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
-        Sys.print('cmd   '                                 , Sys.CLZ_HELP_CMD, False)
-        Sys.print('[ -a '                                  , Sys.CLZ_HELP_ARG, False)
-        Sys.print('{'                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print('param_a'                                , Sys.CLZ_HELP_PARAM, False)
-        Sys.print('}'                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print(' -b '                                   , Sys.CLZ_HELP_ARG, False)
-        Sys.print('{'                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print('param_b'                                , Sys.CLZ_HELP_PARAM, False)
-        Sys.print('}'                                      , Sys.CLZ_HELP_PARAM, False)
-        Sys.print(']'                                      , Sys.CLZ_HELP_ARG)
+        Sys.echo('    '+AbstractCli.conf.PRG_CLI_NAME+' ' , Sys.CLZ_HELP_PRG, False)
+        Sys.echo('cmd   '                                 , Sys.CLZ_HELP_CMD, False)
+        Sys.echo('[ -a '                                  , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('{'                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo('param_a'                                , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo('}'                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo(' -b '                                   , Sys.CLZ_HELP_ARG, False)
+        Sys.echo('{'                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo('param_b'                                , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo('}'                                      , Sys.CLZ_HELP_PARAM, False)
+        Sys.echo(']'                                      , Sys.CLZ_HELP_ARG)
 
 
     @staticmethod

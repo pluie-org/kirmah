@@ -41,7 +41,11 @@ class Io:
     from bz2                import compress as bzcompress, decompress as bzdecompress
     from errno              import EEXIST
     from os                 import remove as removeFile, utime, rename
-    from mmap               import mmap, PROT_READ
+    from platform           import system
+    if system() == 'Windows' :
+        from mmap               import mmap, ACCESS_READ as PROT_READ
+    else :
+        from mmap               import mmap, PROT_READ
 
     def __init__(self):
         """"""
@@ -125,8 +129,11 @@ class Io:
     @staticmethod
     def get_file_obj(path, binary=False, writing=False, update=False, truncate=False):
         """"""
-        if not writing :
-            f = open(path, mode='rt' if not binary else 'rb')
+        if not writing :                
+            if not binary :
+                f = open(path, encoding='utf-8', mode='rt')
+            else :
+                f = open(path, mode='rb')
         else :
             if update and not Io.file_exists(path):
                 if binary :

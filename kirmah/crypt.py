@@ -705,17 +705,17 @@ class Kirmah:
             filePath += ext
             depDir   = dirs
             perc     = 10
-            frav     = 2.7
+            frav     = len(hlst['data'])
             with Io.wfile(filePath) as fo :
                 while p < hlst['head'][1] :
-                    perc += 0.5
+                    perc = p/3*100/len(hlst['data'])
                     Sys.cli_emit_progress(perc)
                     try:
                         self.mergePart(fo, hlst['data'][p], depDir)
                     except Exception as e:
                         Sys.pwarn((('merge : ',(str(e),Sys.CLZ_WARN_PARAM), ' !'),), True)
                         raise e
-                    perc += frav
+                    perc = p*100/len(hlst['data'])
                     Sys.cli_emit_progress(perc)
                     p += 1
             return filePath
@@ -1169,7 +1169,6 @@ class Randomiz:
         self.__init__(self.count,chl)
 
 
-    @Log(Const.LOG_NEVER)
     def get(self,single=True):
         """"""
         pos = choice(self.lst)

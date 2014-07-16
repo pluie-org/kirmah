@@ -5,7 +5,7 @@ from email              import message_from_bytes
 from email.header       import decode_header
 from email.message      import Message
 from re                 import search as research, split as resplit
-
+from multiprocessing    import Process
 from psr.sys            import Io, Sys, Const
 from psr.log            import Log
 
@@ -103,12 +103,12 @@ register(_codec_imap4utf7)
 class ImapConfig:
     """"""
 
-    def __init__(self, host, user, pwd, port=993):
+    def __init__(self, host, user, pwd, port='993'):
         """"""
         self.host = host
         self.user = user
         self.pwd  = pwd
-        self.port = port
+        self.port = str(port)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -173,37 +173,46 @@ class ImapHelper:
     """"""
 
     @Log(Const.LOG_BUILD)
-    def __init__(self, conf, box='INBOX'):
+    def __init__(self, conf, box='INBOX', noBoxCreat=False):
         """"""
-        if research('yahoo.com', conf.host) is not None :
+        if conf.host != None and research('yahoo.com', conf.host) is not None :
             self.DRAFTS = self.DRAFTS[:-1]
-        self.conf    = conf
-        self.rootBox = box
-        self.BOXS    = {}
-        self.cnx     = None
-        self.cnxusr  = None
+        self.conf       = conf
+        self.rootBox    = box
+        self.BOXS       = {}
+        self.cnx        = None
+        self.cnxusr     = None
+        self.noBoxCreat = noBoxCreat
+        self.switchAccount(self.conf, self.rootBox, True)
+
+    @Log()
+    def reconnect(self):
+        """"""
+        Sys.pwlog([(' Reconnecting... ', Const.CLZ_7, True)])
         self.switchAccount(self.conf, self.rootBox, True)
 
 
     @Log()
     def switchAccount(self, conf, box='INBOX', force=False):
+        """"""
         if force or self.cnx is None or self.cnxusr is not conf.user :
-            try :            
-                Sys.print(' Attempt to login... '  , Sys.Clz.fgB7, False)
-                Sys.print('('                      , Sys.Clz.fgn7, False)
-                Sys.print(conf.user                , Sys.Clz.fgB2, False)
-                Sys.print('@'                      , Sys.Clz.fgn7, False)
-                Sys.print(conf.host                , Sys.Clz.fgB4, False)
-                Sys.print(':'                      , Sys.Clz.fgn7, False)
-                Sys.print(conf.port                , Sys.Clz.fgB3, False)
-                Sys.print(')'                      , Sys.Clz.fgn7)
+            try :
+                Sys.pwlog([(' Attempt to login... '                , Const.CLZ_7),
+                           ('('                                    , Const.CLZ_0),
+                           (conf.user                              , Const.CLZ_2),
+                           ('@'                                    , Const.CLZ_0),
+                           (conf.host                              , Const.CLZ_3),
+                           (':'                                    , Const.CLZ_0),
+                           (conf.port                              , Const.CLZ_4),
+                           (')'                                    , Const.CLZ_0, True)])
+
                 self.cnx = ImapClient(conf.host,conf.port)
             except Exception as e :
                 raise BadHostException()
-            
+
             try :
                 status, resp = self.cnx.login(conf.user,conf.pwd)
-            
+
             except Exception as e :
                 status = self.KO
                 pass
@@ -212,11 +221,12 @@ class ImapHelper:
                     self.cnxusr = None
                     raise BadLoginException(' Cannot login with '+conf.user+':'+conf.pwd)
                 else :
-                    Sys.print(' connected'  , Sys.Clz.fgB2)
+                    Sys.pwlog([(' Connected ', Const.CLZ_2, True),
+                               (Const.LINE_SEP_CHAR*Const.LINE_SEP_LEN , Const.CLZ_0, True)])
                     self.cnxusr = conf.user
                     try :
                         status, resp = self.cnx.select(self.rootBox)
-                        if status == self.KO :
+                        if status == self.KO and not self.noBoxCreat:
                             self.createBox(self.rootBox)
                             status, resp = self.cnx.select(self.rootBox)
                         self.initBoxNames()
@@ -433,9 +443,10 @@ class ImapHelper:
         if len(ids) > 0 and ids[0]!='' and ids[0]!=None:
             delids = ImapHelper._getIdsList(ids)            
             status, resp = self.cnx.uid('store', delids, self.FLAGS, self.DELETED )
-            Sys.print(' Deleting msg ', Sys.Clz.fgn7, False, False)
-            Sys.print(delids      , Sys.Clz.fgB1, False, False)
-            Sys.print(' '+status      , Sys.Clz.fgB7)
+            
+            Sys.pwlog([(' Deleting msg ', Const.CLZ_0),
+                       (delids                    , Const.CLZ_1),
+                       (' '+status              , Const.CLZ_7, True)])
             self.cnx.expunge()
         self.cnx.select(self.rootBox)
 
@@ -454,6 +465,10 @@ class ImapHelper:
     @Log(Const.LOG_APP)
     def getAttachment(self, msg, toDir='./', byUid=False):
         """"""
+        # self.download(msg, toDir, byUid, False)
+        # p = Process(target=self.download, args=(msg, toDir, byUid))
+        # p.start()
+        # p.join()
         if not isinstance(msg, Message) :
             msg = self.getEmail(msg, byUid)
         for part in msg.walk():
@@ -461,6 +476,23 @@ class ImapHelper:
             if part.get_content_maintype() == 'multipart' or not filename : continue
             with Io.wfile(Sys.join(toDir, filename)) as fo :
                 fo.write(part.get_payload(decode=True))
+        
+
+    @Log(Const.LOG_APP)
+    def download(self, msg, toDir, byUid=False, reconError=True):
+        """"""
+        try:            
+            if not isinstance(msg, Message) :
+                msg = self.getEmail(msg, byUid)
+            for part in msg.walk():
+                filename = part.get_filename()
+                if part.get_content_maintype() == 'multipart' or not filename : continue
+                with Io.wfile(Sys.join(toDir, filename)) as fo :
+                    fo.write(part.get_payload(decode=True))
+        except Exception as e :
+            print(e)
+            self.reconnect()
+            self.download(msg, toDir, byUid, False)
 
 
     @Log()

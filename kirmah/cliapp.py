@@ -65,7 +65,8 @@ class CliApp:
             if Io.file_exists(self.o.outputfile) and not self.o.force :
 
                 Sys.pwarn((('the key file ',(self.o.outputfile, Sys.Clz.fgb3), ' already exists !'),
-                           'if you rewrite this file, all previous files encrypted with the corresponding key will be unrecoverable !'))
+                           'if you rewrite this file, all previous files encrypted with the corresponding key will be',
+                           'unrecoverable !'))
 
                 done   = Sys.pask('Are you sure to rewrite this file')
                 self.stime  = Sys.datetime.now()
@@ -74,7 +75,7 @@ class CliApp:
             Sys.pstep('Generate key file', self.stime, done)
 
             if done :
-                Sys.print(' '*5+Sys.realpath(self.o.outputfile), Sys.Clz.fgB1, True)
+                Sys.echo(' '*5+Sys.realpath(self.o.outputfile), Sys.Clz.fgB1, True)
 
         else :
             self.parser.error_cmd((('invalid option ',('-l, --length', Sys.Clz.fgb3), ' value (', ('128',Sys.Clz.fgb3),' to ', ('4096',Sys.Clz.fgb3),')'),))
@@ -319,15 +320,15 @@ class CliApp:
     def onend_cmd(self, title, stime, done, outputfile):
         """"""
         s = Const.LINE_SEP_CHAR*Const.LINE_SEP_LEN
-        Sys.print(s, Sys.CLZ_HEAD_LINE)
+        Sys.echo(s, Sys.CLZ_HEAD_LINE)
         Sys.wlog([(s, Const.CLZ_HEAD_SEP)])
         Sys.pstep(title, stime, done, True)
-        Sys.print(s, Sys.CLZ_HEAD_LINE)
+        Sys.echo(s, Sys.CLZ_HEAD_LINE)
         Sys.wlog([(s, Const.CLZ_HEAD_SEP)])
         if done and outputfile is not None:
             Sys.cli_emit_progress(100)
-            Sys.print(' '*5+Sys.realpath(outputfile), Sys.Clz.fgB1, False)
-            Sys.print(' ('+Sys.getFileSize(outputfile)+')', Sys.Clz.fgB3)
+            Sys.echo(' '*5+Sys.realpath(outputfile), Sys.Clz.fgB1, False)
+            Sys.echo(' ('+Sys.getFileSize(outputfile)+')', Sys.Clz.fgB3)
             bdata = [(' '*5+Sys.realpath(outputfile), 'io'),(' ('+Sys.getFileSize(outputfile)+')','func')]
             Sys.wlog(bdata)
             Sys.wlog(Sys.dprint())

@@ -86,7 +86,7 @@ class Log:
             if not (isinstance(a, str) or isinstance(a, bytes)):
                 a = str(a)
             if len(a) > Sys.g.LOG_LIM_ARG_LENGTH :
-                args[i] = a[:Sys.g.LOG_LIM_ARG_LENGTH]+'…' if isinstance(a, str) else bytes('…','utf-8')
+                args[i] = a[:Sys.g.LOG_LIM_ARG_LENGTH]+'...' if isinstance(a, str) else bytes('...','utf-8')
         args = str(args)[1:-1]
         if args[-1:] == ',' : args = args[:-1]
         return args
@@ -104,11 +104,15 @@ class Log:
 
             a, b, c, d, e = ('=> ' if enter else '<= '), '['+str(Sys.getpid()).rjust(5,' ')+']', ' '+sign+'(', Log._formatArgs(args), ') '
             if not isChildProc :
-                Sys.print(a , Sys.CLZ_IO  , False)
-                Sys.print(b , Sys.CLZ_PID if  not isChildProc else Sys.CLZ_CPID, False)
-                Sys.print(c , Sys.CLZ_FUNC, False)
-                Sys.print(d , Sys.CLZ_ARGS, False)
-                Sys.print(e , Sys.CLZ_FUNC, False)
+                Sys.echo(a , Sys.CLZ_IO  , False)
+                Sys.echo(b , Sys.CLZ_PID if  not isChildProc else Sys.CLZ_CPID, False)
+                Sys.echo(c , Sys.CLZ_FUNC, False)
+                try:
+                    Sys.echo(d , Sys.CLZ_ARGS, False)
+                except :
+                    Sys.echo('?nr_arg?' , Sys.CLZ_ARGS, False)
+                    pass
+                Sys.echo(e , Sys.CLZ_FUNC, False)
 
             bind_data += [(a, Const.CLZ_IO),(b, Const.CLZ_CPID if isChildProc else Const.CLZ_PID),(c , Const.CLZ_CFUNC if isChildProc else Const.CLZ_FUNC),(d , Const.CLZ_ARGS),(e , Const.CLZ_CFUNC if isChildProc else Const.CLZ_FUNC)]
 

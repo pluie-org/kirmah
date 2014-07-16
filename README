@@ -20,7 +20,7 @@ Install on other distrib
 install pkg depends (look at archlinux PKGBUILD file wich provide usefull informations)
 
 simply untar archive, then launch :
-$ python ./kirmah/kirmah.py
-$ python ./kirmah/kirmah-cli.py
+$ python3 ./kirmah/kirmah.py
+$ python3 ./kirmah/kirmah-cli.py
 
 you can also use python disutils and setup.py
