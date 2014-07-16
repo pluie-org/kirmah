@@ -87,9 +87,7 @@ class CliApp:
         if self.o.outputfile is None :
             self.o.outputfile = Sys.basename(self.a[1])
         if self.o.outputfile[-len(Kirmah.EXT):] != Kirmah.EXT :
-            print(self.o.outputfile[-len(Kirmah.EXT):])
             self.o.outputfile += Kirmah.EXT
-        print(self.o.outputfile)
 
         d        = self.getDefaultOption((self.o.compress,self.o.fullcompress,self.o.nocompress))
         compress = (KirmahHeader.COMP_END if d == 0 or (d is None and Io.is_binary(self.a[1])) else (KirmahHeader.COMP_ALL if d==1 or d is None else KirmahHeader.COMP_NONE))

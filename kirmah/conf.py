@@ -48,7 +48,7 @@ PRG_LICENSE         = 'GNU GPL v3'
 PRG_RESOURCES_PATH  = '/usr/share/'+PRG_PACKAGE+sep
 if not isdir(PRG_RESOURCES_PATH):
     PRG_RESOURCES_PATH = dirname(dirname(realpath(__file__)))+sep+'resources'+sep+PRG_PACKAGE+sep
-print(PRG_RESOURCES_PATH)
+#~ print(PRG_RESOURCES_PATH)
 PRG_GLADE_PATH      = PRG_RESOURCES_PATH+'glade'+sep+PRG_PACKAGE+'.glade'
 PRG_LICENSE_PATH    = PRG_RESOURCES_PATH+'/LICENSE'
 PRG_LOGO_PATH       = join(PRG_RESOURCES_PATH,'..'+sep,'pixmaps'+sep,PRG_PACKAGE+sep,PRG_PACKAGE+'.png')

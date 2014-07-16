@@ -87,6 +87,7 @@ class AbstractCli():
         """"""
         if not Sys.isUnix : Const.LINE_SEP_CHAR = '-'
         AbstractCli.conf        = prgconf
+        self.CHQ                = "'"
         self.parser             = TinyParser()
         self.parser.print_help  = self.print_help
         self.parser.print_usage = self.print_usage
@@ -98,7 +99,7 @@ class AbstractCli():
         self.parser.add_option('-q', '--quiet'    , action='store_true', default=False)
 
         self.parser.add_option('--no-color'       , action='store_true' , default=False)
-
+        
 
     def error_cmd(self, data, pusage=False):
         """"""
@@ -127,7 +128,7 @@ class AbstractCli():
         Sys.wlog(a)
         Sys.wlog(b + c + d + e + f )
         Sys.wlog(a)
-        Sys.wlog(Sys.dprint())
+        #~ Sys.wlog(Sys.dprint())
 
 
     @staticmethod

@@ -126,18 +126,9 @@ class Cli(AbstractCli):
                         Sys.g.LOG_QUEUE.put(Sys.g.SIGNAL_STOP)
 
             else :
-                self.parser.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),))
+                self.parser.error_cmd((('unknow command ',(a[0],Sys.Clz.fgb3)),), True)
 
         if not o.quiet : Sys.dprint()
-
-#~
-    #~ @staticmethod
-    #~ def error_cmd(data):
-        #~ """"""
-        #~ Cli.print_usage('')
-        #~ Sys.dprint()
-        #~ Sys.pwarn(data, True)
-        #~ Cli.exit(1)
 
 
     @staticmethod

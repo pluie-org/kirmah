@@ -86,7 +86,7 @@ class Log:
             if not (isinstance(a, str) or isinstance(a, bytes)):
                 a = str(a)
             if len(a) > Sys.g.LOG_LIM_ARG_LENGTH :
-                args[i] = a[:Sys.g.LOG_LIM_ARG_LENGTH]+'...' if isinstance(a, str) else b'...'
+                args[i] = a[:Sys.g.LOG_LIM_ARG_LENGTH]+'…' if isinstance(a, str) else bytes('…','utf-8')
         args = str(args)[1:-1]
         if args[-1:] == ',' : args = args[:-1]
         return args

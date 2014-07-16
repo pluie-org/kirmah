@@ -48,10 +48,10 @@ class Sys:
     """"""
 
     from platform   import system  as getSysName
-    from os         import system  as sysCall, remove as removeFile, makedirs, sep, getpid
+    from os         import system  as sysCall, remove as removeFile, makedirs, sep, getpid, listdir
     from getpass    import getuser as getUserLogin
     from time       import strftime, mktime, time, localtime, sleep
-    from datetime   import datetime
+    from datetime   import datetime, timedelta
     from sys        import exit
     from os.path    import abspath, dirname, join, realpath, basename, getsize, isdir, splitext
     from math       import log, floor, ceil
@@ -164,6 +164,8 @@ class Sys:
         """Give a human representation of bytes size `b`
         :Returns: `str`
         """
+        if b is None or b=='': return '0'
+        else :b = int(b)
         units = [Const.UNIT_SHORT_B, Const.UNIT_SHORT_KIB, Const.UNIT_SHORT_MIB, Const.UNIT_SHORT_GIB, Const.UNIT_SHORT_TIB];
         b = max(b,0);
         if b == 0 : lb= 0
@@ -261,6 +263,7 @@ class Sys:
     @staticmethod
     def dprint(d='',end=Const.LF, dbcall=False):
         """"""
+        dbcall = Sys.g.QUIET
         if not dbcall :
             if not Sys.g.GUI or Sys.g.GUI_PRINT_STDOUT :
                 if Sys.g.RLOCK is not None :
@@ -310,10 +313,15 @@ class Sys:
 
 
     @staticmethod
+    def getDelta(t):
+        v = ''.join(['{:.5f}'.format(Sys.time()-(Sys.mktime(t.timetuple())+1e-6*t.microsecond)),' s'])
+        return v
+
+    @staticmethod
     def pdelta(t, label='', dbcall= False):
         """"""
         if len(label)>0 and not dbcall : Sys.print(label+' ', Sys.CLZ_IO, False)
-        v = ''.join(['{:.5f}'.format(Sys.time()-(Sys.mktime(t.timetuple())+1e-6*t.microsecond)),' s'])
+        v = Sys.getDelta(t)
         if not dbcall :
             Sys.print(v, Sys.CLZ_DELTA)
 
