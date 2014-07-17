@@ -2,7 +2,7 @@
 [Desktop Entry]
 Name=Kirmah
 Comment=Encryption with symmetric-key algorithm Kirmah
-Version=0.34
+Version=2.18
 Icon=/usr/share/pixmaps/kirmah/kirmah.png
 Exec=kirmah
 Terminal=false
