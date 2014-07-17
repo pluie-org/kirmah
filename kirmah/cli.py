@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 #-*- coding: utf-8 -*-
-#  kirmah.cli.py
+#  kirmah/cli.py
 #  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #  software  : Kirmah    <http://kirmah.sourceforge.net/>
 #  version   : 2.18
-#  date      : 2013
+#  date      : 2014
 #  licence   : GPLv3.0   <http://www.gnu.org/licenses/>
 #  author    : a-Sansara <[a-sansara]at[clochardprod]dot[net]>
 #  copyright : pluie.org <http://www.pluie.org/>
